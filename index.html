@@ -34,10 +34,11 @@ body.dark{
 /* ===== SIDEBAR ===== */
 .sidebar{
   width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);
-  display:none;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;
-  overflow-y:auto;transition:.25s
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;
+  overflow-y:auto;transition:transform .25s;
+  transform:translateX(-100%)
 }
-.sidebar.show{display:flex}
+.sidebar.show{transform:translateX(0)}
 .sidebar-logo{padding:16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--pri),var(--ter));border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;flex-shrink:0}
 .logo-txt{font-size:12px;font-weight:700;color:var(--tx);line-height:1.2}
@@ -74,8 +75,9 @@ body.dark .suser{background:rgba(255,255,255,.04)}
 .tb-page-title{font-size:14px;font-weight:700;color:var(--tx);white-space:nowrap;margin-left:4px}
 
 /* ===== CONTENT ===== */
-.content-area{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
-@media(max-width:768px){.content-area{margin-left:0}}
+.content-area{flex:1;margin-left:0;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .25s}
+.content-area.sidebar-open{margin-left:var(--sidebar-w)}
+@media(max-width:768px){.content-area{margin-left:0!important}}
 .page-header{padding:16px 16px 0;margin-bottom:0}
 .page-header h1{font-size:18px;font-weight:700;color:var(--tx)}
 .page-header p{font-size:12px;color:var(--tx2);margin-top:2px}
@@ -543,6 +545,8 @@ var VIATURAS=[
   {id:'am23',nome:'Marrua AM23',ic:'&#128665;'},
   {id:'atego',nome:'Atego',ic:'&#128666;'},
   {id:'hilux',nome:'Hilux Ambulancia',ic:'&#128657;'},
+  {id:'hilux25',nome:'Hilux 2.5 (2KD-FTV)',ic:'&#128665;'},
+  {id:'hilux30',nome:'Hilux 3.0 (1KD-FTV)',ic:'&#128665;'},
   {id:'lr',nome:'Land Rover',ic:'&#128663;'},
   {id:'worker',nome:'VW Worker',ic:'&#128666;'}
 ];
@@ -613,6 +617,42 @@ var PREVENTIVA={
     transmissao:{cambio:'Verificar oleo cambio a cada 40.000 km - SAE 80W90 GL-4',diferenciais:'Verificar nivel mensal - SAE 90 GL-5',obs:'Verificar folgas na caixa. Conferir cardan e juntas. Observar ruidos durante marcha.'},
     combustivel:{obs:'Drenar agua do separador diariamente. Verificar mangueiras e abracao do tanque. Inspecionar chicote e conectores da bomba. Conferir retorno dos injetores.'},
     falhas:['Agua no separador diesel','Entupimento filtro ar','Desgaste prematuro de lonas','Vazamento diferencial','Folga excessiva no cardan','Superaquecimento por entupimento do radiador']},
+  hilux25:{nome:'Hilux 2.5 - 2KD-FTV',oleo:{tipo:'SAE 5W30 sintetico diesel API SN/CF (Toyota recomenda) ou 10W40 CI-4',capacidade:'5,5L com filtro (motor 2KD-FTV 4 cilindros 2494cc)',troca:'10.000 km / 5.000 km uso severo',severo:'5.000 km - ambulancia em servico continuo'},
+    filtros:[
+      {nome:'Filtro oleo',intervalo:'Cada troca de oleo'},
+      {nome:'Filtro diesel primario com separador agua',intervalo:'Drenar semanal / Trocar 10.000 km'},
+      {nome:'Filtro diesel secundario',intervalo:'20.000 km'},
+      {nome:'Filtro de ar',intervalo:'40.000 km ou conforme restricao'},
+      {nome:'Correia dentada T-BELT 2KD',intervalo:'150.000 km - kit: correia+tensor+roletes+bomba dagua (1h reparo)'},
+      {nome:'Correia auxiliar',intervalo:'Verificar 40.000 km'}
+    ],
+    freios:{fluido:'DOT 3 ou DOT 4',troca:'2 anos ou 60.000 km',obs:'Disco dianteiro / Tambor traseiro. Verificar ABS (4 sensores). Verificar BPP (interruptor pedal freio 4 pinos). Drenar agua filtro diesel e resetar indicacao.'},
+    transmissao:{cambio:'Manual: SAE 75W90 GL-4 / Automatica: ATF Toyota WS',diferenciais:'SAE 80W90 GL-5 - frontal e traseiro',obs:'Caixa transferencia: SAE 75W90 GL-4. Atuador 4x4 eletronico - verificar funcionamento. Solenoides ECT na transmissao automatica.'},
+    combustivel:{obs:'2KD-FTV usa sistema Common Rail Denso. Drenar agua filtro semanalmente. ATENCAO: coletor admissao carboniza com EGR (codigo P2008) - limpar a cada 50.000 km. Apos troca injetor: programar QR code (jumper 4+13 conector diagnostico).'},
+    falhas:['Carbonizacao coletor admissao EGR (P2008)','Correia dentada vencida','Sensor CKP com air-gap incorreto','Injetor sem QR code programado (P1601)','Sensor MAF contaminado','ABS: sensor roda rompido em campo']},
+  hilux30:{nome:'Hilux 3.0 - 1KD-FTV',oleo:{tipo:'SAE 5W30 sintetico diesel API SN/CF ou SAE 10W40 API CI-4',capacidade:'6,7L com filtro (motor 1KD-FTV 4 cilindros 2982cc 163cv)',troca:'10.000 km / 5.000 km uso severo',severo:'5.000 km - servico pesado'},
+    filtros:[
+      {nome:'Filtro oleo',intervalo:'Cada troca de oleo'},
+      {nome:'Filtro diesel primario separador agua',intervalo:'Drenar semanal / Trocar 10.000 km'},
+      {nome:'Filtro diesel secundario',intervalo:'20.000 km'},
+      {nome:'Filtro de ar',intervalo:'40.000 km ou conforme restricao'},
+      {nome:'Correia dentada T-BELT 1KD',intervalo:'150.000 km - kit: correia+tensor+roletes+bomba dagua (1h reparo) - 3 pontos sincronismo'},
+      {nome:'Correia auxiliar com A/C',intervalo:'Verificar 40.000 km - rota: virabrequim>arrefecimento>alternador>AC>rolamentos'},
+      {nome:'Correia auxiliar sem A/C',intervalo:'Verificar 40.000 km - rota: virabrequim>arrefecimento>alternador>tensionador'}
+    ],
+    freios:{fluido:'DOT 3 ou DOT 4',troca:'2 anos ou 60.000 km',obs:'Disco dianteiro / Tambor traseiro. ABS com 4 sensores indutivos. Sensor dianteiro direito: veiculos ate out/2008 = fiacao diferente (pinos 31/30 UCE ABS). BPP 4 pinos com ignição logica invertida.'},
+    transmissao:{cambio:'Manual: SAE 75W90 GL-4 / Automatica: ATF Toyota WS - nao misturar tipos',diferenciais:'SAE 80W90 GL-5',obs:'1KD-FTV tem EGR eletronico com solenoides (pinos C/09, C/13, C/18 da UCE). Turbo VGT geometria variavel - aletas carbonizam: limpar ou substituir. UCE transmissao automatica: atras porta-luvas.'},
+    combustivel:{obs:'1KD-FTV: sistema Common Rail Denso 1600 bar. Injetores: 095000-5920/8290 (resistencia: 0,85-1,05 ohm). SCV controla pressao RAIL (pinos D/01 e D/02 UCE). Drenar agua filtro semanal. CRITICO: limpar coletor admissao a cada 50.000 km (EGR carboniza borboletas - codigo P2008 e limite 3000 RPM). Turbo VGT: verificar aletas a cada 80.000 km.'},
+    falhas:['Carbonizacao GRAVE coletor admissao EGR (P2008) - tipico 1KD',
+      'Turbo VGT com aletas carbonizadas (P0045/P0234/P0299)',
+      'Correia dentada vencida - 3 pontos sincronismo criticos',
+      'Sensor MAF falho - fumaça preta e consumo alto',
+      'SCV com defeito - pressao RAIL baixa (P0087)',
+      'Injetor sem QR code programado (P1601)',
+      'Sensor CKP 36 dentes: resistencia 1850-2450 ohm',
+      'Sensor CMP 4+1 dentes: resistencia 950-1250 ohm',
+      'UCE Motor no porta-luvas - umidade causa falha',
+      'Imobilizador: transponder chave com defeito']},
   lr:{nome:'Land Rover',oleo:{tipo:'SAE 5W40 ou conforme manual especifico',capacidade:'Conforme modelo',troca:'10.000 km ou 12 meses'},
     filtros:[{nome:'Filtro de Oleo',intervalo:'Toda troca de oleo'},{nome:'Filtro de Ar',intervalo:'Verificar sempre'}],
     freios:{obs:'Verificar nivel de fluido mensalmente e pastilhas a cada revisao.'},
@@ -960,6 +1000,172 @@ Object.keys(PANES_AM20).forEach(function(sist){
     PANES[sist] = PANES[sist].concat(PANES_AM20[sist]);
   }
 });
+
+// ===== PANES HILUX AMBULÂNCIA - 1KD-FTV (3.0) / 2KD-FTV (2.5) =====
+var PANES_HILUX = {
+  eletrica:[
+    {id:'he1',nome:'UCE Motor - Falha / Motor não parte - Hilux 1KD/2KD',sev:'c',
+     loc:'UCE Motor (Denso) - Porta-luvas lado direito / 4 conectores A(31p) B(35p) C(35p) D(34p)',
+     desc:'UCE do motor Denso com falha. A UCE fica no porta-luvas. Conectores A, B, C e D. Falha pode ser falta de alimentação (+30 / +15), aterramento ou UCE internamente danificada. Código P0606 ou P0607 indicam falha da UCE.',
+     specs:{'Localização UCE':'Porta-luvas lado direito','Conectores':'A(31 pinos), B(35 pinos), C(35 pinos), D(34 pinos)','Alimentação +30':'Fusível F-06m 25A (linha 30) + F-50A + F-25A','Alimentação +15':'Fusível F-06i 7,5A (partida e alimentação UCE)','Aterramento UCE':'Vários pontos - verificar resistência < 0,5 ohm','Relé principal':'Controla alimentação sensores e atuadores','Código UCE':'P0606 = processador / P0607 = desempenho módulo'},
+     testes:['Verificar fusível F-06m (25A) no compartimento motor - UCE linha 30','Verificar fusível F-06i (7,5A) no interior - partida e alimentação UCE','Com ignição ligada: medir tensão no pino 01A (+B) UCE - deve ter 12V','Com ignição ligada: medir tensão no pino 08A (MREL) - deve ter 12V após relé principal fechar','Verificar aterramento da UCE com ohmímetro - deve ser < 0,5 ohm','Checar imobilizador: UCE imobilizador se comunica com UCE motor via pinos B/29 e B/30','Ler código com scanner - P0606/P0607 indicam UCE com problema interno'],
+     solucoes:['Verificar e restaurar alimentação da UCE','Verificar e restaurar aterramento da UCE','Verificar relé principal no conjunto de relés do sistema','Reprogramar ou substituir UCE','Verificar comunicação com imobilizador (pinos B29/B30)'],
+     rel:['Relé principal','Imobilizador','Fusíveis compartimento motor','CAN Bus']},
+
+    {id:'he2',nome:'ABS - UCE / Sensor velocidade roda - Hilux',sev:'a',
+     loc:'UCE ABS - Compartimento motor lado direito / Sensores nas rodas (conector 34 pinos)',
+     desc:'Sistema ABS da Hilux com UCE de 34 pinos. Sensores de velocidade indutivos em cada roda. Luz ABS acesa indica falha. ATENÇÃO: veículos produzidos antes de outubro de 2008 têm fiação diferente no sensor dianteiro direito (pinos 31/30 vs sem ligação nos novos).',
+     specs:{'UCE ABS':'34 pinos - compartimento motor lado direito','Alimentação +30 ABS':'F-09m (40A) e F-11m (30A)','Alimentação +15 ABS':'F-15i (20A) - somente sem bloqueio diferencial traseiro','Sensor D.Esquerdo':'Pinos 09(VM) e 08(VD) da UCE ABS','Sensor D.Direito':'Pinos 31(BR)/30(VM) - somente prod. até out/2008 - depois pinos diretos','Sensor T.Esquerdo':'Pinos 11(RS) e 12(AZ)','Sensor T.Direito':'Pinos 33(VD) e 34(VM)','Bloqueio dif. traseiro':'Pino 22(RX) - somente veículos com bloqueio','Sensor desaceleração':'Pinos 04(VM), 07(PR), 28(BR) da UCE ABS','BPP freio':'Pino 10(VD/BR) - interruptor pedal livre'},
+     testes:['Verificar luz ABS no painel - se acesa: ler código com scanner OBD','Verificar fusíveis F-09m (40A) e F-11m (30A) no compartimento motor','Verificar fusível F-15i (20A) no interior (ABS sem bloqueio dif.)','Medir resistência do sensor suspeito: entre 1.000-2.000 ohms (indutivo)','Verificar air-gap sensor/roda fônica: máx 1,5mm','Inspecionar anel fônico de cada roda por dentes quebrados ou ferrugem','Verificar chicote dos sensores por rompimento (comum em veículos de campo)','Sensor dianteiro direito: veículos até out/2008 usam pinos 31/30 - verificar fiação correta'],
+     solucoes:['Substituir sensor de velocidade da roda com defeito','Limpar anel fônico','Ajustar air-gap do sensor','Verificar e reparar chicote','Substituir UCE ABS se todos sensores OK e falha persiste'],
+     rel:['Freios hidráulicos','Sensor velocidade VSS','Diferencial bloqueio','UCE Motor']},
+
+    {id:'he3',nome:'Imobilizador - Motor não parte sem código',sev:'c',
+     loc:'UCE Imobilizador - Atrás do painel (16 pinos) / Antena transponder na chave de ignição',
+     desc:'Imobilizador impede partida sem a chave correta. UCE de 16 pinos atrás do painel. Comunica com UCE motor via pinos B/29(AM/PR) e B/30(AM/VD). Fusível F-23m (7,5A antes out/2008 / 10A após out/2008) e F-11i (7,5A).',
+     specs:{'UCE Imobilizador':'16 pinos - atrás do painel central','Fusível principal':'F-23m: 7,5A (antes out/2008) / 10A (após out/2008)','Fusível secundário':'F-11i 7,5A','Alimentação +30':'Linha 30 direta da bateria','Alimentação +15':'Linha 15 (ignição)','Comunicação UCE motor':'Pinos B/29 (AM/PR) e B/30 (AM/VD)','Amplificador transponder':'4 pinos (AZ, AZ/AM, AZ/PR, AZ/LR) entre UCE e antena','Lâmpada segurança':'Pino 08 (VM/VM) ao painel'},
+     testes:['Verificar se lâmpada de segurança no painel pisca normalmente ao ligar ignição (pisca e apaga = OK)','Se lâmpada fica acesa contínua: imobilizador não reconhece a chave','Verificar fusível F-23m e F-11i','Testar com chave reserva (se tiver): se partir com outra chave, chave principal com transponder defeituoso','Verificar continuidade do amplificador transponder (4 pinos) - chicote pode estar quebrado','Verificar comunicação entre UCE imobilizador e UCE motor (pinos B29/B30): deve ter sinal com ignição','Checar se antena ao redor da chave de ignição está bem posicionada'],
+     solucoes:['Substituir transponder da chave','Reprogramar chave na UCE do imobilizador (requer equipamento Toyota)','Substituir amplificador do sinal transponder','Substituir UCE do imobilizador','Verificar e reparar chicote da antena'],
+     rel:['UCE Motor','Chave de ignição','Fusíveis interior','Lâmpada de segurança']},
+
+    {id:'he4',nome:'Fusível queimado - Mapa completo Hilux 2006-2011',sev:'m',
+     loc:'Caixa fusíveis compartimento motor (30 posições) + Caixa interior (18 posições)',
+     desc:'Guia completo de fusíveis da Hilux 2006-2011. Use para localizar o circuito afetado quando algum sistema para de funcionar. ATENÇÃO: F-23m mudou de amperagem em outubro de 2008.',
+     specs:{'F-04m 15A':'Faróis de neblina','F-05m 10A':'Buzina','F-06m 25A':'UCE Motor (linha 30)','F-09m 40A':'UCE ABS (linha 30)','F-10m 40A':'Sistema ar condicionado','F-11m 30A':'UCE ABS (linha 30)','F-13m 100A':'Alimentação geral (F07-12m, 02i-05i)','F-14m 80A':'Relé velas aquecedoras','F-15m 50A':'Alimentação geral (F04-06m)','F-16m 30A':'Motor partida e F01i/06i/11i','F-17m 40A':'Alimentação geral F21m e F22m','F-18m 50A':'Sistema controle emissões','F-21m 20A':'Farol lado direito','F-22m 20A':'Farol lado esquerdo','F-23m* 7,5/10A':'Portas/travamento/imobilizador/faróis/AC/alarme','F-24m 15A':'Sistema áudio','F-25m 7,5A':'Luzes internas/painel/relógio/travamento','F-26m 20A':'Controle emissões','F-28m 7,5A':'Sistema de carga','F-29m 15A':'Luzes emergência e piscas','F-30m 30A':'Alimentação geral F23-25m','F-01i 15A':'Injeção (não utilizado)','F-02i 7,5A':'Conector diagnóstico','F-03i 10A':'Interruptor pedal freio BPP','F-04i 10A':'Áudio/painel/luzes/relógio/acendedor/AC/desembaçador','F-06i 7,5A':'Partida e UCE Motor','F-07i 10A':'Sistema A/C','F-08i 7,5A':'Painel instrumentos','F-11i 7,5A':'UCE Airbag/imobilizador/transmissão automática/UCE Motor','F-12i 20A':'Lavador e limpador para-brisa','F-13i 10A':'A/C/ABS/VSS/luzes/vidro/mudança/painel/alarme/travamento','F-14i 30A':'Vidro elétrico','F-15i 20A':'UCE ABS (somente sem bloqueio dif.)','F-17i 20A':'Desembaçador vidro traseiro','F-18i 25A':'Travamento portas'},
+     testes:['Identificar sistema que parou de funcionar','Localizar fusível correspondente nesta tabela','Testar fusível com multímetro em continuidade - sem bip = queimado','Fusível queimado repetidamente = curto no circuito - rastrear antes de substituir','F-13m (100A) queimado: afeta múltiplos sistemas - verificar curto geral','*F-23m: antes out/2008 = 7,5A / após out/2008 = 10A - não substituir pela amperagem errada'],
+     solucoes:['Substituir fusível pela amperagem correta','Localizar e reparar curto antes de substituir','Não misturar amperagens diferentes','Manter estoque de fusíveis 7,5A / 10A / 15A / 20A / 25A / 30A'],
+     rel:['UCE Motor','ABS','Airbag','Imobilizador','A/C','Partida']},
+
+    {id:'he5',nome:'Sistema A/C - Compressor não liga / Ar quente - Hilux',sev:'m',
+     loc:'UCE A/C no painel (conector 40 pinos) / Compressor no motor / Sensor pressão A/C',
+     desc:'Sistema de ar condicionado da Hilux controlado por UCE própria (40 pinos) no painel. Comunicação com UCE do motor via pinos 18(VM/AZ) e 19(AM). Fusíveis: F-13i (10A interior), F-10m (40A motor), F-02i (10A).',
+     specs:{'UCE A/C':'40 pinos - painel central (conector 01-20 e 21-40)','Fusível A/C motor':'F-10m (40A)','Fusível A/C interior':'F-13i (10A) e F-07i (10A)','Fusível principal':'F-02i (10A)','Relé A/C':'No conjunto relés - alimentado por F-13i e F-10m','Sensor pressão A/C':'2 pinos (01/02 da UCE A/C)','Compressor':'Pino 01 AZ/BR da UCE A/C (acionamento)','Termoresistor':'Pinos 07(VD) e 08(RS) da UCE A/C','Motor ventilador interno':'Pinos 01(BR/PR) e 02(PR)','Comunicação UCE motor':'Pinos 18(VM/AZ) e 19(AM) da UCE A/C para conector B UCE Motor'},
+     testes:['Verificar fusíveis F-10m (40A), F-13i (10A), F-07i (10A) e F-02i (10A)','Com ignição ligada e A/C acionado: medir tensão no relé do A/C - deve ter 12V na bobina','Verificar sensor de pressão do A/C: com A/C desligado e motor frio - testar continuidade no conector','Verificar termoresistor: com A/C ligado por 5 min - deve ler resistência variável com temperatura','Compressor não acopla: verificar sinal 12V no pino 01(AZ/BR) da UCE A/C com A/C solicitado','Verificar carga do gás R134a - pressão baixa = sensor de pressão desliga compressor por proteção','Verificar comunicação UCE A/C com UCE motor nos pinos 18/19 - curto ou circuito aberto bloqueia A/C'],
+     solucoes:['Substituir fusível queimado','Substituir relé do A/C','Substituir sensor de pressão do A/C','Carregar gás R134a','Substituir compressor ou embreagem magnética','Substituir termoresistor','Verificar chicote UCE A/C'],
+     rel:['UCE Motor','Fusíveis','Gás R134a','Ventilador interno']},
+
+    {id:'he6',nome:'Airbag - Luz acesa / UCE com falha',sev:'a',
+     loc:'UCE Airbag - Abaixo painel central, à frente da alavanca de câmbio / Sensores dianteiros',
+     desc:'UCE do airbag posicionada abaixo do painel central, à frente da alavanca de câmbio. Sensores impacto dianteiros esquerdo e direito. Bolsas motorista (via mola relógio) e passageiro. NÃO manusear chicote do airbag com bateria conectada.',
+     specs:{'UCE Airbag':'Abaixo painel central - à frente alavanca câmbio','Fusíveis':'F-11i (7,5A) e F-08i (7,5A)','Alimentação +30':'Linha 30 direta','Alimentação +15 (ignição)':'F-11i 7,5A','Sensor impacto D.Esquerdo':'Pinos 28(MP) e 30(BR/VM) da UCE airbag','Sensor impacto D.Direito':'Pinos 27(MR/BR) e 29(LR/MA) da UCE airbag','Bolsa motorista':'Pinos 05(AM/PR) e 06(AM) via mola relógio (espiral)','Bolsa passageiro':'Pinos 04(AM/VM) e 03(AM/VZ) direto','Conector diagnóstico':'Pinos 01-08 e 09-16 (16 pinos)','ATENÇÃO':'Nunca conectar bateria com chicote desconectado na área do airbag'},
+     testes:['SEGURANÇA: desligar ignição e aguardar 90 segundos antes de manusear sistema','Verificar luz airbag no painel: pisca código ao ligar ignição - contar piscadas','Verificar fusíveis F-11i (7,5A) e F-08i (7,5A)','Ler código com scanner OBD no conector diagnóstico','Verificar mola relógio (cabo espiral) - ao girar volante, verificar se chicote espiralado está íntegro','Verificar conectores dos sensores de impacto por oxidação ou mau contato','Verificar continuidade dos sensores de impacto com multímetro (cuidado: capacitores internos)'],
+     solucoes:['Substituir UCE airbag (requer programação)','Substituir sensor de impacto defeituoso','Substituir mola relógio','Verificar e reparar chicote do airbag','NUNCA disparar o airbag manualmente - perigo de vida'],
+     rel:['Mola relógio','Sensores impacto','UCE Motor','Painel instrumentos']}
+  ],
+  combustivel:[
+    {id:'hc1',nome:'Motor não parte ou morre - SCV / Pressão RAIL - 1KD/2KD',sev:'c',
+     loc:'Válvula controle sucção SCV: pinos D/01(PCV-) e D/02(PCV+) UCE / Sensor RAIL: pinos D/26(PCR1), D/18(VC), D/28(E2)',
+     desc:'Falha no sistema Common Rail Denso. SCV (Suction Control Valve) controla a quantidade de combustível que entra na bomba de alta pressão. Falha do SCV causa pressão RAIL baixa ou ausente. Sensor de pressão RAIL fora de faixa gera código P0087, P0088, P0190-P0193.',
+     specs:{'SCV pinos':'D/01(PCV-) e D/02(PCV+) - cor Amarelo/Verde e Verde/Branco','Sensor pressão RAIL':'3 pinos: D/26(PCR1)=Amarelo/Vermelho, D/18(VC)=Vermelho/Branco, D/28(E2)=Marrom','Resistência sensor RAIL':'Terminais 1-2: 16,4 kΩ / Terminais 2-3: ≤ 3 kΩ','Pressão RAIL partida':'Mínimo 200 bar para partir','Pressão RAIL marcha lenta':'Aprox. 300-400 bar','Pressão RAIL plena carga':'Até 1600 bar (1KD-FTV)','Código SCV':'P0087 (baixa) / P0088 (alta) / P1229 (bomba)','Código RAIL':'P0190/P0192/P0193 (sensor)'},
+     testes:['Verificar pressão RAIL com scanner Denso/Toyota: marcha lenta ~300-400 bar, acelerar deve subir','Se pressão baixa: verificar filtro diesel primário e secundário ANTES da bomba','Testar SCV: com ignição desligada medir resistência entre pinos 1 e 2 do SCV - típico 2-5 ohm','Aplicar 12V diretamente no SCV: deve ouvir clique de abertura/fechamento','Pressão rail OK mas motor não parte: verificar injetores (retorno excessivo)','Verificar sensor pressão RAIL: terminais 1-2 = 16,4kΩ / terminais 2-3 = ≤3kΩ','Programação de injetores: jumper pinos 4+13 do conector diagnóstico, ignição 3 min, motor sem acelerar 1 min'],
+     solucoes:['Substituir filtros diesel (primário e secundário)','Substituir SCV (válvula controle sucção)','Substituir bomba de alta pressão se SCV OK e pressão ainda baixa','Substituir sensor de pressão RAIL','Programar/substituir injetores','Drenar água do filtro - reset: desconectar conector preto no filtro'],
+     rel:['Injetores 1KD/2KD','Bomba alta pressão','Filtro diesel','ECU Denso']},
+
+    {id:'hc2',nome:'Injetores - Teste e programação - Hilux 1KD/2KD',sev:'c',
+     loc:'Injetores Denso: 095000-5920 / 095000-8290 (1KD-FTV 3.0) / EDU módulo acionador no compartimento motor',
+     desc:'Injetores Denso de alta pressão. Módulo EDU aciona os injetores. Resistência dos injetores: 0,85 a 1,05 ohms a 20°C. Cada injetor tem código QR de compensação que DEVE ser programado na UCE após substituição - pode ser feito sem scanner.',
+     specs:{'Injetor 1KD-FTV':'Denso 095000-5920 / 095000-8290','Resistência injetor':'0,85 a 1,05 ohms a 20°C','Cores fios (1KD)':'Inj.1=Branco / Inj.2=Rosa / Inj.3=Azul / Inj.4=Verde','EDU até 2009':'2 conectores: A(preto 8 pinos) e B(cinza 8 pinos) no compartimento motor','EDU a partir 2010':'3 conectores: F(6p), G(6p), H(8p) no compartimento motor','Código P0200':'Circuito injetor aberto','Código P1601':'Compensação injetor - QR code não programado','Programação sem scanner':'Jumper pinos 4+13 diagnóstico + ignição 3min + motor 1min sem acelerar'},
+     testes:['Com ignição desligada: medir resistência de cada injetor - deve ser 0,85 a 1,05 ohm','Resistência fora da faixa ou OL (aberto): substituir injetor','Verificar chicote EDU por oxidação: EDU fica exposto no compartimento motor (suscetível à umidade)','Verificar tensão alimentação EDU: pino 8A = 12V com ignição ligada (relé EDU acionado)','Aterramento EDU: pino 6(GND) deve ter < 1 ohm em relação à carroçaria','Após substituição do injetor: OBRIGATÓRIO programar código QR de compensação','Programação sem scanner: jumper 4+13 diagnóstico > ignição 3 min > desligar > motor sem acelerar 1 min'],
+     solucoes:['Substituir injetor defeituoso (medir resistência primeiro)','Programar código QR de compensação após substituição','Substituir EDU se circuito de acionamento com defeito','Verificar e proteger chicote do EDU contra umidade','Verificar retorno dos injetores por entupimento'],
+     rel:['SCV','Pressão RAIL','EDU','UCE Motor Denso']},
+
+    {id:'hc3',nome:'Perda potência 3000 RPM / Carbonização coletor - Hilux 1KD/2KD',sev:'c',
+     loc:'Coletor de admissão / Borboletas / Sistema EGR - Motor 1KD-FTV e 2KD-FTV',
+     desc:'PROBLEMA TÍPICO E RECORRENTE em todos os Hilux 1KD e 2KD. Carbonização excessiva do coletor de admissão causada pela válvula EGR. As borboletas internas do coletor ficam obstruídas de fuligem. Motor limita rotação a ~3000 RPM e grava código P2008. Problema confirmado pela Toyota.',
+     specs:{'Código falha':'P2008/58 - Controle entrada coletor admissão','Sintoma principal':'Rotação limitada a ~3000 RPM / Perda severa de potência','Causa':'Carbonização das borboletas e entradas do cabeçote pelo EGR','Confirmação':'Desmontar coletor: se borboletas pretas e entupidas = causa confirmada','EGR eletroválvula':'Pino C/09(AZ/VM) da UCE - somente motor 3.0','EGR válvula controle':'Pino C/18(AZ/PR) da UCE','Borboleta admissão variável':'Eletroválvula pino D/15(VD) UCE','Cápsula pneumática':'Borboleta coletor - verificar furos e eletroválvula (ouve click ao ligar 12V)'},
+     testes:['Verificar código P2008 no scanner','Desmontar coletor de admissão e inspecionar borboletas - se pretas e com fuligem: causa confirmada','Verificar cápsula pneumática do coletor: furos ou travamento? Eletroválvula clica ao aplicar 12V?','Verificar mangueira da cápsula até bomba de vácuo por furos ou dobras','Verificar eletroválvula EGR: pino C/09(AZ/VM) deve ter 12V com motor quente em marcha lenta','ATENÇÃO: turbocharger também pode sofrer carbonização no caracol e escapamento','Problema pode ocorrer em qualquer Hilux 1KD e 2KD com EGR - verificar histórico de manutenção'],
+     solucoes:['Descarbonizar completamente o coletor de admissão','Descarbonizar borboletas internas (ou substituir coletor se muito danificado)','Descarbonizar entradas de ar do cabeçote','Verificar e limpar turbocharger se necessário','Limpar/substituir válvula EGR','Apagar código P2008 após limpeza - monitorar recorrência'],
+     rel:['EGR','Turbocharger','Cabeçote','MAF','UCE Motor']},
+
+    {id:'hc4',nome:'Sensor MAF - Falha / Fumaça preta / Consumo excessivo',sev:'a',
+     loc:'Medidor fluxo ar MAF - Entrada filtro ar / Pinos UCE: 32C(EVG), 24C(VG), 31D(THA), 28D(E2)',
+     desc:'Sensor MAF (Mass Air Flow) mede a massa de ar e temperatura de admissão. Falha causa fumaça preta, consumo elevado, marcha lenta irregular ou motor morrendo. Resistência THA (temperatura do ar) varia com temperatura.',
+     specs:{'Pinos MAF na UCE':'32C(EVG)=Preto/Branco, 24C(VG)=Amarelo/Branco, 31D(THA)=Branco/Vermelho, 28D(E2)=Marrom','Alimentação MAF':'Relé Principal - Linha 30','Teste sinal VG':'Soprar no MAF: tensão deve flutuar no pino 3(VG) - se não: substituir','Resistência THA -20°C':'13,6 a 18,4 kΩ','Resistência THA 20°C':'2,21 a 2,69 kΩ','Resistência THA 60°C':'0,22 a 0,67 kΩ','Código MAF':'P0100, P0102, P0103 (circuito) / motor 3.0 somente'},
+     testes:['Verificar alimentação do MAF: pino 1(+B) deve ter 12V com ignição ligada (Relé Principal)','Verificar aterramento: pino 2(E2G) deve ter < 0,5 ohm com carroçaria','Testar sinal: aplicar +B no pino 1 e E2G no pino 2, conectar voltímetro no pino 3(VG) e soprar - tensão deve variar','Testar temperatura ar THA: medir resistência pinos 4(THA) e 5(E2) conforme tabela de temperatura','Verificar chicote MAF por oxidação - conector de 5 pinos','Com scanner: verificar valor de massa de ar em tempo real - em marcha lenta: 1,5-3 g/s'],
+     solucoes:['Substituir sensor MAF','Limpar MAF com produto específico (ar comprimido seco primeiro, sem tocar no fio quente)','Verificar chicote e conector por oxidação','Verificar filtro de ar - filtro saturado afeta leitura do MAF'],
+     rel:['Filtro de ar','UCE Motor','Turbocharger','SCV']}
+  ],
+  mecanica:[
+    {id:'hm1',nome:'Sensor CKP - Roda fônica 36 dentes - Hilux 1KD/2KD',sev:'c',
+     loc:'Sensor CKP (NE) - Bloco motor / Pinos UCE: D/27(NE+)=Amarelo, D/34(NE-)=Azul',
+     desc:'Sensor CKP indutivo com roda fônica de 36 dentes. Motor não parte ou falha sem o CKP. Resistência do sensor: 1.850 a 2.450 ohms a 20°C. Frequência normal: 150-170 Hz na partida / 450-510 Hz em marcha lenta.',
+     specs:{'Pinos UCE':'D/27(NE+)=Amarelo / D/34(NE-)=Azul','Resistência sensor':'1.850 a 2.450 ohms a 20°C','Roda fônica':'36 dentes','Frequência partida':'150 a 170 Hz (motor girando mas não pegando)','Frequência marcha lenta':'450 a 510 Hz (motor aquecido)','Código CKP':'P0335/12 e P0339/13','Air-gap':'Verificar folga sensor/roda fônica'},
+     testes:['Medir resistência entre pinos 1(NE+) e 2(NE-) do sensor: deve ser 1.850-2.450 ohms','Resistência fora da faixa = sensor com defeito','Verificar air-gap entre sensor e roda fônica: máx 1,5mm','Inspecionar roda fônica por dentes quebrados ou deformados','Com osciloscópio: verificar forma de onda - deve ter 36 pulsos por volta','Com frequencímetro na saída do sensor: 150-170Hz na partida / 450-510Hz em ralenti','Verificar chicote pinos D/27 e D/34: oxidação causa sinal fraco'],
+     solucoes:['Substituir sensor CKP','Ajustar air-gap','Substituir roda fônica se danificada','Verificar e reparar chicote'],
+     rel:['Sensor CMP','UCE Motor','Injetores','Partida']},
+
+    {id:'hm2',nome:'Sensor CMP - Roda 4+1 dentes - Hilux 1KD/2KD',sev:'a',
+     loc:'Sensor CMP (G) - Cabeçote / Pinos UCE: C/23(G+)=Amarelo, C/31(G-)=Azul',
+     desc:'Sensor CMP indutivo com roda de 4 dentes simétricos + 1 dente estratégico para determinar fase de compressão do cilindro 1. Resistência: 950-1.250 ohms. Motor parte com dificuldade sem o CMP.',
+     specs:{'Pinos UCE':'C/23(G+)=Amarelo / C/31(G-)=Azul','Resistência sensor':'950 a 1.250 ohms a 20°C','Roda fônica':'4 dentes (a 90°) + 1 dente (fase compressão)','Frequência partida':'15 a 19 Hz (motor girando mas não pegando)','Frequência marcha lenta':'24 a 28 Hz (motor aquecido)','Código CMP':'P0340/12','Função':'UCE usa junto com CKP para determinar PMS cilindro 1'},
+     testes:['Medir resistência entre pinos 1(G+) e 2(G-) do sensor: deve ser 950-1.250 ohms','Com osciloscópio: 4 pulsos iguais + 1 pulso diferente a cada 2 voltas do virabrequim','Verificar frequência na partida: 15-19 Hz / em marcha lenta: 24-28 Hz','Inspecionar roda fônica do comando: verificar dentes e alinhamento','Verificar chicote pinos C/23 e C/31 por oxidação ou dano'],
+     solucoes:['Substituir sensor CMP','Verificar correia dentada: desalinhamento causa leitura incorreta','Verificar roda fônica do comando','Verificar chicote'],
+     rel:['Sensor CKP','Correia dentada','UCE Motor','Injetores']},
+
+    {id:'hm3',nome:'Correia dentada - Troca e sincronismo - 1KD/2KD',sev:'c',
+     loc:'Tampa da distribuição / Correia dentada sincronizadora - Motor 1KD-FTV (3.0) e 2KD-FTV (2.5)',
+     desc:'Correia dentada do motor Hilux deve ser trocada a cada 150.000 km. Tempo de reparo: 1 hora. Painel avisa com indicação "T-BELT". NUNCA dobrar a correia (fibra de vidro). Sincronismo em 3 pontos: virabrequim, comando e bomba alta pressão.',
+     specs:{'Intervalo troca':'150.000 km para Hilux 2.5 (2KD-FTV) e 3.0 (1KD-FTV)','Tempo reparo':'Aproximadamente 1 hora','Indicação painel':'T-BELT pisca no display ao ligar o motor','Reset indicação':'Procedimento com botão TRIP (13 passos)','Torque engrenagem comando':'98 Nm','Torque polia órgãos auxiliares':'365 Nm','Torque engrenagem bomba injetora':'64 Nm','Torque tensor correia auxiliar':'45 Nm','3 pontos sincronismo':'Virabrequim + Comando + Bomba alta pressão (marcas verdes)','ATENÇÃO correia':'Não dobrar (fibra de vidro) / Não reutilizar / Guardar na embalagem até instalação'},
+     testes:['Verificar indicação T-BELT no painel','Inspecionar correia por trincas, desgaste, contaminação por óleo ou graxa','Verificar tensionadores e roletes auxiliares por travamento ou folga excessiva','Verificar polias por deformação, corrosão ou desalinhamento','APÓS TROCA: girar manualmente o motor 2 voltas completas e verificar alinhamento das 3 marcas','Verificar se bomba d água e correia auxiliar estão OK antes de montar tudo'],
+     solucoes:['Substituir correia dentada + tensionador + roletes + bomba d água (kit completo)','Fazer reset da indicação T-BELT com procedimento botão TRIP','Após troca: girar motor 2 voltas manualmente, confirmar alinhamento das marcas'],
+     rel:['Sensor CKP','Sensor CMP','Bomba alta pressão','Bomba dagua']},
+
+    {id:'hm4',nome:'Turbo VGT - Geometria variável com defeito - Hilux 3.0',sev:'c',
+     loc:'Turbocharger VGT / Módulo acionador turbo (10 pinos) / Sensor bico variável',
+     desc:'Hilux 3.0 (1KD-FTV) usa turbo de geometria variável VGT. O módulo acionador do turbo controla o motor das aletas variáveis. Falha causa perda de potência, fumaça preta e códigos P0045, P0234, P0299 ou P1251. Carbonização das aletas é problema comum.',
+     specs:{'Acionador turbo':'10 pinos - alimentado pelo Relé Principal','Alimentação pino 8':'9 a 14V com ignição ligada','Aterramento pino 6':'< 1 ohm com carroçaria','Pinos UCE':'D/10(VNTO)=Preto/Laranja / D/17(VNTI)=Preto/Vermelho','Sensor posição aletas':'3 pinos (pinos 5/1 do módulo) - alimentação 5VDC','Motor aletas':'2 pinos no módulo','Código P0045':'Sistema turbocharger','Código P0234':'Turbocharger overboost','Código P0299':'Turbocharger underboost','Código P1251':'Turbocharger - módulo'},
+     testes:['Verificar alimentação acionador turbo: pino 8 = 9-14V com ignição ligada','Verificar aterramento pino 6: < 1 ohm com carroçaria','Com scanner: verificar posição das aletas em tempo real - deve variar conforme carga','Verificar sensor de posição das aletas: 5V alimentação / sinal variável 0,5-4,5V','Retirar turbo e verificar aletas: se carbonizadas e travadas = limpeza ou substituição','Verificar chicote entre UCE (pinos D/10 e D/17) e módulo acionador por oxidação'],
+     solucoes:['Limpar aletas variáveis do turbocharger com solvente específico','Substituir turbocharger se aletas danificadas','Substituir módulo acionador do turbo','Substituir sensor de posição das aletas','Verificar e reparar chicote do acionador'],
+     rel:['EGR','Coletor admissão','Filtro ar','MAF','Sensor CKP']},
+
+    {id:'hm5',nome:'Tração 4x4 - Não engaja / UCE com falha',sev:'m',
+     loc:'UCE 4x4 - Atrás do console lateral direito (conector verde 10 pinos) / Atuador caixa transferência',
+     desc:'Sistema 4x4 eletromecânico da Hilux. UCE de 10 pinos localizada atrás do console lateral. O atuador da caixa de transferência é acionado eletronicamente. Comunicação com módulo ABS para controle de tração.',
+     specs:{'UCE 4x4':'Conector verde 10 pinos - console lateral direito','Alimentação +30':'Pino 05 (BR/PR)','Alimentação +15':'Pino 10 (PR/AM)','Módulo ABS':'Pino 08 (VM/PR) da UCE 4x4 para pino 17 do módulo ABS','Atuador caixa transferência':'Pinos 04(BR/VM), 03(BR/VM), 02(VM/BR), 01(VM/AM) - 4 pinos','Interruptor 4x4':'Pino 06(PR) da UCE 4x4','Painel instrumentos':'Pino 07(BR/VM) da UCE 4x4','Modos 4x4':'2H / 4H / 4L (via interruptor)'},
+     testes:['Verificar alimentação UCE 4x4: pino 05 = 12V permanente / pino 10 = 12V com ignição','Verificar interruptor 4x4: com multímetro em continuidade - cada posição deve fechar um circuito','Com scanner: ler código da UCE 4x4 se luz indicadora acesa no painel','Verificar atuador da caixa de transferência: 4 fios - testar cada via com multímetro','Verificar comunicação UCE 4x4 com módulo ABS (pino 08): chicote pode estar oxidado','Verificar óleo da caixa de transferência: nível baixo causa ruídos e dificuldade de troca'],
+     solucoes:['Substituir interruptor 4x4','Substituir atuador da caixa de transferência','Verificar e completar nível de óleo da caixa de transferência','Substituir UCE 4x4','Verificar chicote entre UCE e atuador'],
+     rel:['ABS','Caixa câmbio','Diferencial','UCE Motor']}
+  ],
+  arrefecimento:[
+    {id:'ha1',nome:'Sensor temperatura água CTS - Falha / Marcha alta - Hilux',sev:'a',
+     loc:'Sensor CTS - Cabeçote / Pinos UCE: D/19(THW)=Vermelho/Azul, D/28(E2)=Marrom',
+     desc:'Sensor de temperatura do líquido arrefecimento CTS (Coolant Temperature Sensor). Falha causa marcha lenta alta, consumo excessivo, fumaça branca ou motor indo a fundo. Torque de instalação: 20 Nm.',
+     specs:{'Pinos UCE':'D/19(THW)=Vermelho/Azul / D/28(E2)=Marrom','Resistência 20°C':'2,32 a 2,59 kΩ','Resistência 80°C':'0,310 a 0,326 kΩ','Torque instalação':'20 Nm (2,04 kgf.m)','Código falha':'P0115, P0117, P0118 - circuito temperatura arrefecimento','Temperatura normal operação':'85-95°C','Temperatura alerta':'>100°C'},
+     testes:['Com motor frio (20°C): medir resistência pinos THW e E2 do sensor: deve ser 2,32-2,59 kΩ','Com motor quente (80°C): deve ser 0,310-0,326 kΩ','Resistência muito alta (>5kΩ frio) = circuito aberto - verificar chicote','Resistência muito baixa (<0,1kΩ) = curto - verificar chicote ou sensor','Com scanner: verificar temperatura do motor em tempo real - se mostrar valor absurdo (>150°C ou -40°C) = sensor com defeito','Verificar chicote pinos D/19 e D/28 por oxidação'],
+     solucoes:['Substituir sensor CTS (torque: 20 Nm)','Verificar chicote por oxidação ou rompimento','Verificar nível do líquido de arrefecimento - nível baixo causa leitura errática'],
+     rel:['UCE Motor','Termostato','Radiador','Ventilador']}
+  ],
+  freios:[
+    {id:'hf1',nome:'Freio ABS / BPP - Interruptor pedal - Hilux',sev:'a',
+     loc:'Interruptor pedal freio BPP - 4 pinos / UCE ABS pino 10(VD/BR) / UCE Motor pinos B/14 e B/15',
+     desc:'Interruptor do pedal de freio BPP (Brake Pedal Position) com 4 pinos. Instalado e acionado com pedal LIVRE. Alimenta UCE ABS, UCE Motor e UCE Transmissão. Falha causa problemas no ABS, na estratégia de injeção e na transmissão automática.',
+     specs:{'BPP pinos UCE ABS':'Pino 10(VD/BR) da UCE ABS','BPP pinos UCE Motor':'B/14(VM/AZ) e B/15(VD/BR) do conector B da UCE','Fusível BPP':'F-03i (10A) no interior','Alimentação +15':'Fusível F-11i (7,5A)','Alimentação +30':'Linha 30','Função':'Instalado com pedal livre = circuito fechado (pedal livre = fechado / aplicado = aberto)','Código falha':'P0504/51 - interruptor do freio'},
+     testes:['Verificar fusível F-03i (10A) e F-11i (7,5A)','Com pedal livre: medir continuidade no interruptor BPP - deve ter continuidade entre os pinos corretos','Com pedal pressionado: continuidade deve abrir','Verificar tensão no pino 10 da UCE ABS: pedal livre = 0V / pedal pressionado = 12V (ou inverso)','Verificar os 4 pinos do conector BPP: VM/AZ(4), VD/PR(2), VD/BR(1), PR/LR(3)','Verificar chicote entre BPP e UCE ABS por oxidação'],
+     solucoes:['Substituir interruptor BPP','Verificar e reparar chicote','Verificar fusíveis F-03i e F-11i','Ajustar posição do interruptor no pedal'],
+     rel:['UCE ABS','UCE Motor','Transmissão automática','Fusíveis interior']}
+  ],
+  transmissao:[
+    {id:'ht1',nome:'Transmissão automática - Falha / Solenóides ECT - Hilux',sev:'a',
+     loc:'UCE Transmissão - Atrás do porta-luvas / CAN Bus: A/21(RX)=Violeta, A/20(RS)=Rosa',
+     desc:'Transmissão automática da Hilux controlada por UCE própria. Comunicação com UCE motor via CAN Bus (B/22 CAN High e B/21 CAN Low). Solenóides ECT controlam as trocas. Sensor de rotação entrada e saída.',
+     specs:{'UCE Transmissão':'Atrás do porta-luvas lado direito','CAN High UCE motor':'B/22(RX)=RS / B/21(RS) para transmissão A/21(RX) e A/20(RS)','Solenóides ECT':'5 solenóides (pinos C/20, C/19, C/16, C/18, C/17 da UCE transmissão)','Sensor rotação entrada':'C/03(RX) e C/02(RS)','Sensor rotação saída':'C/30(VM) e C/29(VD)','Alimentação UCE trans':'F-06m(25A) motor / F-11i(7,5A) interior','Interruptor Park/Neutral':'Para UCE Motor: pino A/06 (transmissão manual: F-06i) ou A/06+A/07 (automática)','Temperatura óleo':'Sensor no cárter - pino A/18 do painel de instrumentos'},
+     testes:['Verificar nível e qualidade do óleo ATF na transmissão - óleo queimado ou com partículas = problema interno','Com scanner: ler códigos da UCE transmissão','Verificar comunicação CAN Bus entre UCE motor e transmissão: 60 ohms entre CAN-H e CAN-L','Verificar interruptor Park/Neutral: pino A/06 e A/07 da UCE motor (somente automática)','Medir resistência dos solenóides ECT: variável conforme modelo - verificar curto ou circuito aberto','Verificar sensor de velocidade da transmissão (entrada e saída): resistência típica 200-600 ohms'],
+     solucoes:['Trocar óleo ATF + filtro da transmissão','Substituir solenóide ECT defeituoso','Verificar e reparar comunicação CAN Bus','Substituir UCE transmissão','Verificar sensor Park/Neutral'],
+     rel:['UCE Motor','CAN Bus','ABS','Pedal freio BPP']}
+  ]
+};
+
+// Atualizar PANES_HILUX no PANES global
+Object.keys(PANES_HILUX).forEach(function(sist){
+  if(PANES[sist]){
+    // Remover panes antigas da hilux (he/hc/hm/ha/hf/ht) se existirem
+    PANES[sist] = PANES[sist].filter(function(p){
+      return !/^h[echmaift]/.test(p.id);
+    });
+    PANES[sist] = PANES[sist].concat(PANES_HILUX[sist]);
+  }
+});
+
 
 ;
 
@@ -1371,11 +1577,11 @@ document.getElementById('ia-inp').addEventListener('keypress',function(e){if(e.k
 
 var MONTADORAS = [
   {id:'agrale', nome:'Agrale', logo:'🚙', cor:'#1E3A5F', modelos:['am21','am20','am23'], desc:'Marruá AM20/21/23'},
-  {id:'toyota', nome:'Toyota', logo:'🚑', cor:'#DC2626', modelos:['hilux'], desc:'Hilux Ambulância'},
+  {id:'toyota', nome:'Toyota', logo:'🚑', cor:'#DC2626', modelos:['hilux','hilux25','hilux30'], desc:'Hilux Ambulância / 2.5 / 3.0'},
   {id:'mercedes', nome:'Mercedes-Benz', logo:'🚚', cor:'#1a1a1a', modelos:['atego'], desc:'Atego'},
   {id:'landrover', nome:'Land Rover', logo:'🚗', cor:'#2d5a27', modelos:['lr'], desc:'Série Defender'},
   {id:'volkswagen', nome:'Volkswagen', logo:'🚛', cor:'#1B4F8A', modelos:['worker'], desc:'Worker 8-160/13-180/17-250'},
-  {id:'todas', nome:'Todas', logo:'⚙️', cor:'#6B7280', modelos:['am21','am20','am23','hilux','atego','lr','worker'], desc:'Ver todas as viaturas'}
+  {id:'todas', nome:'Todas', logo:'⚙️', cor:'#6B7280', modelos:['am21','am20','am23','hilux','hilux25','hilux30','atego','lr','worker'], desc:'Ver todas as viaturas'}
 ];
 
 var montadoraAtual = null;
@@ -1384,8 +1590,20 @@ var montadoraAtual = null;
 function toggleSidebar(){
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('sidebar-overlay');
-  sb.classList.toggle('show');
-  if(ov) ov.classList.toggle('show');
+  var ca = document.getElementById('content-area');
+  var isOpen = sb.classList.contains('show');
+  if(isOpen){
+    sb.classList.remove('show');
+    ov.classList.remove('show');
+    if(ca) ca.classList.remove('sidebar-open');
+  } else {
+    sb.classList.add('show');
+    if(window.innerWidth > 768){
+      if(ca) ca.classList.add('sidebar-open');
+    } else {
+      ov.classList.add('show');
+    }
+  }
 }
 
 function toggleDark(){
@@ -1513,9 +1731,16 @@ function abrirMontadora(m){
 // ---- SOBRESCREVER abrirApp ----
 var _origAbrirApp = window.abrirApp;
 window.abrirApp = function(){
-  document.getElementById('sidebar').classList.add('show');
-  var topbar = document.getElementById('topbar'); if(topbar) topbar.style.display = 'flex';
-  var fab = document.getElementById('ia-fab'); if(fab) fab.style.display = 'flex';
+  var sb = document.getElementById('sidebar');
+  var ca = document.getElementById('content-area');
+  var topbar = document.getElementById('topbar');
+  var fab = document.getElementById('ia-fab');
+  if(window.innerWidth > 768){
+    sb.classList.add('show');
+    if(ca) ca.classList.add('sidebar-open');
+  }
+  if(topbar) topbar.style.display = 'flex';
+  if(fab) fab.style.display = 'flex';
   renderMontadoras();
   atualizarBadges();
   if(_origAbrirApp) _origAbrirApp();
@@ -1571,7 +1796,11 @@ window.processarIA = function(q, filtro){
 // ---- INICIALIZAR ----
 document.addEventListener('DOMContentLoaded', function(){
   if(localStorage.getItem('oi_dark') === '1') document.body.classList.add('dark');
-  if(window.innerWidth > 768) document.getElementById('sidebar').classList.add('show');
+  if(window.innerWidth > 768){
+    document.getElementById('sidebar').classList.add('show');
+    var ca = document.getElementById('content-area');
+    if(ca) ca.classList.add('sidebar-open');
+  }
   abrirApp();
   // Enter na IA
   var iaInp = document.getElementById('ia-inp');
