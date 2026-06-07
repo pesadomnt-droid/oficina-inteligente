@@ -577,6 +577,15 @@ canvas.pdf-pg{box-shadow:0 2px 8px rgba(0,0,0,.3);border-radius:2px;max-width:10
   </div>
   <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
   <div id="adm-msg" style="font-size:12px;color:var(--tx2);min-height:16px"></div>
+  <hr style="border:none;border-top:1px solid var(--brd);margin:14px 0">
+  <div style="background:var(--bg2);border-radius:8px;padding:12px">
+    <p style="margin:0 0 8px;font-size:12px;color:var(--tx2);font-weight:600">📁 SINCRONIZAÇÃO ENTRE DISPOSITIVOS</p>
+    <p style="margin:0 0 10px;font-size:11px;color:var(--tx2);line-height:1.5">Após adicionar PDFs, exporte o <code>docs.json</code> e coloque no repositório GitHub junto com o <code>index.html</code>. Qualquer dispositivo verá os PDFs automaticamente.</p>
+    <button onclick="exportarDocs()" style="background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;border:none;padding:9px 16px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;width:100%">
+      ⬇️ Exportar docs.json para o GitHub
+    </button>
+    <div id="export-status" style="font-size:11px;color:var(--tx2);margin-top:6px;text-align:center"></div>
+  </div>
 </div>
 </div>
 
@@ -1334,7 +1343,31 @@ Object.keys(PANES_ATEGO).forEach(function(sist){
 
 var usuario=null,viatura=null,compAtual=null,sistemaAtivo=null;
 var favs=JSON.parse(localStorage.getItem('oi_favs')||'[]');
+// === DOCS: carrega do GitHub (docs.json) com fallback para localStorage ===
 var _docs=JSON.parse(localStorage.getItem('oi_docs')||'[]');
+var _docsRemotoCarregado=false;
+(function carregarDocsRemoto(){
+  // Tenta buscar docs.json do mesmo domínio (GitHub Pages)
+  fetch('docs.json?v='+Date.now(),{cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('sem docs.json');return r.json();})
+    .then(function(remotos){
+      if(!Array.isArray(remotos))return;
+      // Mesclar: remoto prevalece, localStorage serve de fallback
+      var ids=remotos.map(function(d){return d.id;});
+      var soLocal=_docs.filter(function(d){return ids.indexOf(d.id)===-1;});
+      _docs=remotos.concat(soLocal);
+      _docsRemotoCarregado=true;
+      // Atualizar localStorage com versão mesclada
+      localStorage.setItem('oi_docs',JSON.stringify(_docs));
+      // Atualizar biblioteca se estiver visível
+      var bib=document.getElementById('s-biblioteca');
+      if(bib&&bib.classList.contains('active')) renderCursos();
+      console.log('[Oficina] docs.json carregado: '+remotos.length+' documentos');
+    })
+    .catch(function(){
+      console.log('[Oficina] docs.json não encontrado - usando localStorage');
+    });
+})();
 var _extras=JSON.parse(localStorage.getItem('oi_extras')||'[]');
 var indice=INDICE_PDFS.concat(_extras);
 
@@ -1981,6 +2014,25 @@ window.selecionarViatura = function(v){
   if(_origSV) _origSV(v);
 };
 
+
+// === EXPORTAR docs.json para o GitHub ===
+function exportarDocs(){
+  if(!_docs || _docs.length === 0){
+    document.getElementById('export-status').textContent = '⚠️ Nenhum documento para exportar.';
+    return;
+  }
+  var json = JSON.stringify(_docs, null, 2);
+  var blob = new Blob([json], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'docs.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  var st = document.getElementById('export-status');
+  st.style.color = '#4CAF50';
+  st.textContent = '✅ Baixado! Coloque o docs.json no repositório GitHub junto com o index.html';
+}
 
 // Abre modal admin (helper sem aspas problemáticas)
 function abrirModalAdm(){
