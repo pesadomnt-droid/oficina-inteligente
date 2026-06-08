@@ -1,24 +1,12 @@
 [
   {
-    "id": "1780854458384",
-    "nome": "Apostila Curso Eletricidade Veicular COMPLETA",
-    "viatura_id": "geral",
-    "cat": "curso",
-    "nivel": "eletrica-basica",
-    "palavras_chave": "",
-    "arquivo_url": "https://res.cloudinary.com/dc8cxw8bs/raw/upload/v1780854458/i7lev2kng8vfnmhsnqha.pdf",
-    "tamanho": "0.0MB",
-    "paginas": 3,
-    "tem_texto": true
-  },
-  {
-    "id": "1780854467423",
+    "id": "1780936156979",
     "nome": "Elétricidade conceitos básicos",
     "viatura_id": "geral",
     "cat": "curso",
     "nivel": "eletrica-basica",
     "palavras_chave": "",
-    "arquivo_url": "https://res.cloudinary.com/dc8cxw8bs/raw/upload/v1780854466/vlfdnv2pkn6wefzxbhy3.pdf",
+    "arquivo_url": "https://res.cloudinary.com/dc8cxw8bs/raw/upload/v1780936155/slaprpyotc2xd1lyvtua.pdf",
     "tamanho": "1.5MB",
     "paginas": 48,
     "tem_texto": true
