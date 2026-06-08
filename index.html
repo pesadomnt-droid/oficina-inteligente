@@ -273,7 +273,7 @@ input{color:var(--tx)}
 .pdf-ctrl button{background:var(--bg2);border:1px solid var(--brd);color:var(--tx);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px}
 .pdf-ctrl button:hover{background:var(--prim);color:#fff;border-color:var(--prim)}
 .pdf-ctrl span{font-size:12px;color:var(--tx2);flex:1;text-align:center}
-#pdf-canvas-wrap{overflow-y:auto;flex:1;display:flex;flex-direction:column;align-items:center;padding:12px;gap:8px;background:var(--bg)}
+#pdf-canvas-wrap{flex:1;overflow:hidden;background:#525659}
 canvas.pdf-pg{box-shadow:0 2px 8px rgba(0,0,0,.3);border-radius:2px;max-width:100%}
 </style>
 </head>
@@ -598,15 +598,13 @@ canvas.pdf-pg{box-shadow:0 2px 8px rgba(0,0,0,.3);border-radius:2px;max-width:10
   <div class="pdf-box">
     <div class="pdf-hdr">
       <h3 id="pdf-titulo">Documento</h3>
-      <button onclick="fecharPDF()" style="background:none;border:none;color:var(--tx2);font-size:22px;cursor:pointer;line-height:1">✕</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a id="pdf-dl-link" href="#" target="_blank" style="font-size:12px;color:var(--tx2);text-decoration:none;padding:4px 8px;border:1px solid var(--brd);border-radius:6px" title="Abrir em nova aba">↗</a>
+        <button onclick="fecharPDF()" style="background:none;border:none;color:var(--tx2);font-size:22px;cursor:pointer;line-height:1">✕</button>
+      </div>
     </div>
-    <div class="pdf-ctrl">
-      <button onclick="pdfPag(-1)">◀</button>
-      <span id="pdf-info">Carregando...</span>
-      <button onclick="pdfPag(1)">▶</button>
-    </div>
-    <div id="pdf-canvas-wrap">
-      <canvas id="pdf-canvas" class="pdf-pg"></canvas>
+    <div id="pdf-canvas-wrap" style="flex:1;padding:0">
+      <iframe id="pdf-frame" src="" style="width:100%;height:100%;border:none;display:block" allowfullscreen></iframe>
     </div>
   </div>
 </div>
@@ -2040,70 +2038,35 @@ function abrirModalAdm(){
   if(m) m.style.display='flex';
 }
 
-// ===== VISUALIZADOR PDF INLINE (sem download visível) =====
-var _pdfDoc=null,_pdfPag=1,_pdfTotal=0,_pdfUrl='';
-
+// ===== VISUALIZADOR PDF — iframe nativo (sem CORS, sem PDF.js) =====
 function abrirPDFBtn(btn){
   abrirPDF(btn.getAttribute('data-url'), btn.getAttribute('data-nome'));
 }
 
 function abrirPDF(url, nome){
-  _pdfUrl=url; _pdfPag=1; _pdfTotal=0;
-  document.getElementById('pdf-titulo').textContent=nome||'Documento';
-  document.getElementById('pdf-info').textContent='Carregando...';
-  document.getElementById('modal-pdf').style.display='flex';
-  document.body.style.overflow='hidden';
-
-  pdfjsLib.getDocument(url).promise.then(function(doc){
-    _pdfDoc=doc; _pdfTotal=doc.numPages;
-    renderPagPDF(1);
-  }).catch(function(e){
-    document.getElementById('pdf-info').textContent='Erro ao carregar PDF.';
-    console.error(e);
-  });
+  document.getElementById('pdf-titulo').textContent = nome || 'Documento';
+  var dl = document.getElementById('pdf-dl-link');
+  if(dl) dl.href = url;
+  // Limpa e recarrega o iframe para evitar cache
+  var frame = document.getElementById('pdf-frame');
+  frame.src = '';
+  setTimeout(function(){ frame.src = url; }, 80);
+  document.getElementById('modal-pdf').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
 function fecharPDF(){
-  document.getElementById('modal-pdf').style.display='none';
-  document.body.style.overflow='';
-  _pdfDoc=null; _pdfPag=1; _pdfTotal=0;
-  var canvas=document.getElementById('pdf-canvas');
-  var ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('modal-pdf').style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('pdf-frame').src = '';
 }
 
-function pdfPag(dir){
-  var nova=_pdfPag+dir;
-  if(!_pdfDoc||nova<1||nova>_pdfTotal)return;
-  renderPagPDF(nova);
-}
-
-function renderPagPDF(num){
-  if(!_pdfDoc)return;
-  _pdfPag=num;
-  document.getElementById('pdf-info').textContent='Pág. '+num+' / '+_pdfTotal;
-  _pdfDoc.getPage(num).then(function(pg){
-    var wrap=document.getElementById('pdf-canvas-wrap');
-    var maxW=Math.min(wrap.clientWidth-24, 780);
-    var vp=pg.getViewport({scale:1});
-    var scale=maxW/vp.width;
-    var vps=pg.getViewport({scale:scale});
-    var canvas=document.getElementById('pdf-canvas');
-    canvas.width=vps.width; canvas.height=vps.height;
-    pg.render({canvasContext:canvas.getContext('2d'),viewport:vps});
-    wrap.scrollTop=0;
-  });
-}
-// Fechar viewer clicando fora
-document.addEventListener('click',function(e){
-  if(e.target===document.getElementById('modal-pdf'))fecharPDF();
+document.addEventListener('click', function(e){
+  if(e.target === document.getElementById('modal-pdf')) fecharPDF();
 });
-// Teclado: setas para navegar, ESC para fechar
-document.addEventListener('keydown',function(e){
-  var m=document.getElementById('modal-pdf');
-  if(!m||m.style.display==='none')return;
-  if(e.key==='ArrowRight'||e.key==='ArrowDown')pdfPag(1);
-  else if(e.key==='ArrowLeft'||e.key==='ArrowUp')pdfPag(-1);
-  else if(e.key==='Escape')fecharPDF();
+document.addEventListener('keydown', function(e){
+  if(document.getElementById('modal-pdf').style.display === 'none') return;
+  if(e.key === 'Escape') fecharPDF();
 });
 
 // ═══════════════════════════════════════════════════
