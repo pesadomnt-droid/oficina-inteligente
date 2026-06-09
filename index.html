@@ -1446,8 +1446,8 @@ function admUpload(input){
     fill.style.width='60%';
     msg.textContent='Enviando para nuvem...';
     var fd=new FormData();
-    fd.append('file',file);fd.append('upload_preset',PRESET);
-    return fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/raw/upload',{method:'POST',body:fd}).then(function(r){
+    fd.append('file',file);fd.append('upload_preset',PRESET);fd.append('access_mode','public');
+    return fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/auto/upload',{method:'POST',body:fd}).then(function(r){
       if(!r.ok)throw new Error('Cloudinary erro '+r.status);
       return r.json().then(function(json){return {json:json,numPages:res.numPages,temTexto:res.temTexto};});
     });
@@ -2050,7 +2050,9 @@ function abrirPDF(url, nome){
   // Limpa e recarrega o iframe para evitar cache
   var frame = document.getElementById('pdf-frame');
   frame.src = '';
-  setTimeout(function(){ frame.src = url; }, 80);
+  // Google Docs Viewer como proxy — resolve CORS e 401 do Cloudinary
+  var gdv = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(url);
+  setTimeout(function(){ frame.src = gdv; }, 80);
   document.getElementById('modal-pdf').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
