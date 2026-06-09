@@ -1350,17 +1350,22 @@ var _docsRemotoCarregado=false;
     .then(function(r){if(!r.ok)throw new Error('sem docs.json');return r.json();})
     .then(function(remotos){
       if(!Array.isArray(remotos))return;
-      // Mesclar: remoto prevalece, localStorage serve de fallback
-      var ids=remotos.map(function(d){return d.id;});
-      var soLocal=_docs.filter(function(d){return ids.indexOf(d.id)===-1;});
-      _docs=remotos.concat(soLocal);
+      // Respeitar IDs que o admin deletou — nunca trazê-los de volta
+      var deletados=JSON.parse(localStorage.getItem('oi_deleted')||'[]');
+      var remotosFiltrados=remotos.filter(function(d){
+        return deletados.indexOf(d.id)===-1;
+      });
+      // Mesclar: remoto filtrado + docs locais que não estão no remoto
+      var idsRemotos=remotosFiltrados.map(function(d){return d.id;});
+      var soLocal=_docs.filter(function(d){
+        return idsRemotos.indexOf(d.id)===-1 && deletados.indexOf(d.id)===-1;
+      });
+      _docs=remotosFiltrados.concat(soLocal);
       _docsRemotoCarregado=true;
-      // Atualizar localStorage com versão mesclada
       localStorage.setItem('oi_docs',JSON.stringify(_docs));
-      // Atualizar biblioteca se estiver visível
       var bib=document.getElementById('s-biblioteca');
       if(bib&&bib.classList.contains('active')) renderCursos();
-      console.log('[Oficina] docs.json carregado: '+remotos.length+' documentos');
+      console.log('[Oficina] docs.json carregado: '+remotosFiltrados.length+' docs ('+deletados.length+' ignorados por deleção)');
     })
     .catch(function(){
       console.log('[Oficina] docs.json não encontrado - usando localStorage');
@@ -1447,7 +1452,7 @@ function admUpload(input){
     msg.textContent='Enviando para nuvem...';
     var fd=new FormData();
     fd.append('file',file);fd.append('upload_preset',PRESET);
-    return fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/raw/upload',{method:'POST',body:fd}).then(function(r){
+    return fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd}).then(function(r){
       if(!r.ok)throw new Error('Cloudinary erro '+r.status);
       return r.json().then(function(json){return {json:json,numPages:res.numPages,temTexto:res.temTexto};});
     });
@@ -1723,10 +1728,14 @@ function renderCursos(){
   container.innerHTML=html;
 }
 function deletarDoc(btn){
-  if(!confirm('Deletar?'))return;
+  if(!confirm('Deletar este documento?'))return;
   var id=btn.getAttribute('data-id');
   _docs=_docs.filter(function(d){return d.id!==id;});
   localStorage.setItem('oi_docs',JSON.stringify(_docs));
+  // Guarda IDs deletados para evitar que o docs.json remoto os traga de volta
+  var deletados=JSON.parse(localStorage.getItem('oi_deleted')||'[]');
+  if(deletados.indexOf(id)===-1) deletados.push(id);
+  localStorage.setItem('oi_deleted',JSON.stringify(deletados));
   renderCursos();
 }
 function renderFavs(){
@@ -2050,8 +2059,14 @@ function abrirPDF(url, nome){
   // Limpa e recarrega o iframe para evitar cache
   var frame = document.getElementById('pdf-frame');
   frame.src = '';
-  // Google Docs Viewer como proxy — resolve CORS e 401 do Cloudinary
-  var gdv = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(url);
+  // Normaliza URL para entrega inline — funciona para raw e image
+  var urlFinal = url
+    .replace('/raw/upload/', '/raw/upload/fl_inline/')
+    .replace('/image/upload/', '/image/upload/fl_attachment:false/');
+  // Atualiza link direto
+  if(dl) dl.href = urlFinal;
+  // Google Docs Viewer como proxy (mais compatível cross-browser)
+  var gdv = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(urlFinal);
   setTimeout(function(){ frame.src = gdv; }, 80);
   document.getElementById('modal-pdf').style.display = 'flex';
   document.body.style.overflow = 'hidden';
