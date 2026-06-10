@@ -1588,6 +1588,65 @@ function admUpload(input){
   input.value='';
 }
 
+// ===== BIBLIOTECA =====
+var _bibNv = 'eletrica-basica';
+
+function bibAba(btn){
+  document.querySelectorAll('.bib-tab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  _bibNv = btn.getAttribute('data-nv');
+  renderCursos();
+}
+
+function bibLockClick(){
+  // 1 clique abre direto — a senha SHA-256 é a proteção real
+  if(!document.body.classList.contains('is-admin')) abrirAdmin();
+  else abrirModalAdm();
+}
+
+function renderCursos(){
+  var container = document.getElementById('dlist-cursos');
+  if(!container) return;
+  var isAdmin = document.body.classList.contains('is-admin');
+  var nv = _bibNv || 'eletrica-basica';
+  var docs = _docs.filter(function(d){ return (d.nivel||d.cat||'geral') === nv; });
+  var btnAdmin = isAdmin ?
+    '<div style="margin-bottom:14px"><button onclick="abrirModalAdm()" style="background:linear-gradient(135deg,#1b5e20,#4CAF50);color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">+ Adicionar PDF nesta categoria</button></div>' : '';
+  if(!docs.length){
+    container.innerHTML = btnAdmin + '<div class="empty">Nenhum documento nesta categoria ainda.</div>';
+    return;
+  }
+  var html = btnAdmin;
+  docs.forEach(function(d){
+    var badgeIdx = d.tem_texto === false ?
+      '<span style="font-size:10px;background:#ff9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">imagem</span>' :
+      (d.tem_texto === true ? '<span style="font-size:10px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">indexado</span>' : '');
+    var via = d.viatura_id && d.viatura_id !== 'geral' ?
+      '<span style="font-size:10px;color:var(--tx2);background:var(--bg2);padding:1px 6px;border-radius:8px;margin-left:4px">'+d.viatura_id+'</span>' : '';
+    html += '<div class="ditem">'+
+      '<div style="flex:1"><strong style="font-size:14px">'+d.nome+'</strong>'+badgeIdx+via+
+      '<br><small style="color:var(--tx2)">'+(d.tamanho||'')+(d.paginas?' · '+d.paginas+' pag.':'')+'</small></div>'+
+      '<div class="dbtn-row" style="margin-top:10px">'+
+      (d.arquivo_url?'<button onclick="abrirPDFBtn(this)" data-url="'+d.arquivo_url+'" data-nome="'+d.nome.replace(/"/g,'')+'" class="dbtn">Visualizar</button>':'')+
+      (isAdmin?'<button data-id="'+d.id+'" onclick="deletarDoc(this)" class="dbtn red">Deletar</button>':'')+
+      '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+
+function deletarDoc(btn){
+  if(!confirm('Deletar este documento?')) return;
+  var id = btn.getAttribute('data-id');
+  _docs = _docs.filter(function(d){ return d.id !== id; });
+  localStorage.setItem('oi_docs', JSON.stringify(_docs));
+  var deletados = JSON.parse(localStorage.getItem('oi_deleted')||'[]');
+  if(deletados.indexOf(id) === -1) deletados.push(id);
+  localStorage.setItem('oi_deleted', JSON.stringify(deletados));
+  renderCursos();
+}
+
+
 function renderFavs(){
   var g=document.getElementById('fav-list');
   if(!favs.length){g.innerHTML='<div class="empty">Nenhum favorito ainda.</div>';return;}
