@@ -1516,325 +1516,78 @@ function admUpload(input){
   var prog=document.getElementById('prog-bar');
   var fill=document.getElementById('prog-fill');
   var nomeDoc=file.name.replace(/\.pdf$/i,'').replace(/_/g,' ');
-  msg.textContent='Extraindo texto...';msg.style.color='#aaa';
-  prog.style.display='block';fill.style.width='10%';
-  file.arrayBuffer().then(function(ab){
-    return pdfjsLib.getDocument({data:ab}).promise;
-  }).then(function(pdfDoc){
-    var extras=JSON.parse(localStorage.getItem('oi_extras')||'[]');
-    var promises=[];
-    for(var p=1;p<=pdfDoc.numPages;p++){
-      promises.push(pdfDoc.getPage(p));
-    }
-    fill.style.width='40%';
-    return Promise.all(promises).then(function(pages){
-      return Promise.all(pages.map(function(pg){return pg.getTextContent();})).then(function(cts){
-        var textoTotal=0;
-        cts.forEach(function(ct,i){
-          var txt=ct.items.map(function(it){return it.str;}).join(' ').trim();
-          if(txt.length>30){textoTotal++;extras.push({p:i+1,v:vid,n:nomeDoc,t:txt.substring(0,350)});}
-        });
-        // PDF com imagem: sem texto extraído — usar palavras-chave manuais como fallback
-        if(textoTotal===0&&kwds.length>10){
-          extras.push({p:1,v:vid,n:nomeDoc,t:kwds+' '+nomeDoc+' '+nivel.replace(/-/g,' ')});
-          msg.textContent='PDF com imagem: indexado por palavras-chave.';
-        }
-        return {extras:extras,numPages:pdfDoc.numPages,temTexto:textoTotal>0};
+  msg.textContent='Enviando para nuvem...';msg.style.color='#aaa';
+  prog.style.display='block';fill.style.width='20%';
+
+  // UPLOAD PRIMEIRO — extração de texto é secundária e nunca bloqueia o upload
+  var fd=new FormData();
+  fd.append('file',file);fd.append('upload_preset',PRESET);
+  fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd})
+    .then(function(r){
+      if(!r.ok) return r.text().then(function(t){throw new Error('Cloudinary '+r.status+': '+t.substring(0,120));});
+      return r.json();
+    })
+    .then(function(json){
+      fill.style.width='70%';
+      msg.textContent='Upload OK! Indexando...';
+      // Salvar doc
+      _docs.push({
+        id:Date.now().toString(),
+        nome:nomeDoc,
+        viatura_id:vid,
+        cat:cat,
+        nivel:nivel,
+        palavras_chave:kwds,
+        arquivo_url:json.secure_url,
+        tamanho:(file.size/1024/1024).toFixed(1)+'MB',
+        paginas:json.pages||'?',
+        tem_texto:false
       });
+      localStorage.setItem('oi_docs',JSON.stringify(_docs));
+      fill.style.width='85%';
+      // Tentar extrair texto em background (não bloqueia)
+      if(typeof pdfjsLib!=='undefined'){
+        file.arrayBuffer().then(function(ab){
+          return pdfjsLib.getDocument({data:ab}).promise;
+        }).then(function(pdfDoc){
+          var extras=JSON.parse(localStorage.getItem('oi_extras')||'[]');
+          var ps=[];for(var p=1;p<=pdfDoc.numPages;p++)ps.push(pdfDoc.getPage(p));
+          return Promise.all(ps).then(function(pages){
+            return Promise.all(pages.map(function(pg){return pg.getTextContent();}));
+          }).then(function(cts){
+            var tot=0;
+            cts.forEach(function(ct,i){
+              var txt=ct.items.map(function(it){return it.str;}).join(' ').trim();
+              if(txt.length>30){tot++;extras.push({p:i+1,v:vid,n:nomeDoc,t:txt.substring(0,350)});}
+            });
+            if(tot===0&&kwds.length>5) extras.push({p:1,v:vid,n:nomeDoc,t:kwds+' '+nomeDoc});
+            // Atualizar tem_texto no doc
+            var idx=_docs.findIndex(function(d){return d.nome===nomeDoc;});
+            if(idx>=0){_docs[idx].tem_texto=tot>0;_docs[idx].paginas=pdfDoc.numPages;}
+            localStorage.setItem('oi_docs',JSON.stringify(_docs));
+            localStorage.setItem('oi_extras',JSON.stringify(extras));
+          });
+        }).catch(function(){/* silencioso — PDF com imagem */});
+      } else if(kwds.length>5){
+        var extras=JSON.parse(localStorage.getItem('oi_extras')||'[]');
+        extras.push({p:1,v:vid,n:nomeDoc,t:kwds+' '+nomeDoc});
+        localStorage.setItem('oi_extras',JSON.stringify(extras));
+      }
+      fill.style.width='100%';
+      msg.textContent='✅ '+nomeDoc+' adicionado com sucesso!';
+      msg.style.color='#4CAF50';
+      if(kwdsEl)kwdsEl.value='';
+      renderCursos();
+      setTimeout(function(){prog.style.display='none';fill.style.width='0';},4000);
+    })
+    .catch(function(e){
+      fill.style.width='0';prog.style.display='none';
+      msg.textContent='❌ Erro: '+(e.message||'Tente novamente.');
+      msg.style.color='#f44336';
     });
-  }).then(function(res){
-    localStorage.setItem('oi_extras',JSON.stringify(res.extras));
-    indice=INDICE_PDFS.concat(res.extras);
-    fill.style.width='60%';
-    msg.textContent='Enviando para nuvem...';
-    var fd=new FormData();
-    fd.append('file',file);fd.append('upload_preset',PRESET);
-    return fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd}).then(function(r){
-      if(!r.ok)throw new Error('Cloudinary erro '+r.status);
-      return r.json().then(function(json){return {json:json,numPages:res.numPages,temTexto:res.temTexto};});
-    });
-  }).then(function(res){
-    fill.style.width='90%';
-    _docs.push({
-      id:Date.now().toString(),
-      nome:nomeDoc,
-      viatura_id:vid,
-      cat:cat,
-      nivel:nivel,
-      palavras_chave:kwds,
-      arquivo_url:res.json.secure_url,
-      tamanho:(file.size/1024/1024).toFixed(1)+'MB',
-      paginas:res.numPages,
-      tem_texto:res.temTexto
-    });
-    localStorage.setItem('oi_docs',JSON.stringify(_docs));
-    if(kwdsEl)kwdsEl.value='';
-    fill.style.width='100%';
-    var tipoIdx=res.temTexto?'texto extraído':'palavras-chave';
-    msg.textContent='✅ '+nomeDoc+' — '+res.numPages+' pág. (indexado por '+tipoIdx+')';
-    msg.style.color='#4CAF50';
-    var sel=document.getElementById('ia-filtro');
-    if(sel&&!sel.querySelector('option[value="'+vid+'"]')){var op=document.createElement('option');op.value=vid;op.textContent=nomeDoc;sel.appendChild(op);}
-    renderCursos();
-  }).catch(function(e){
-    msg.textContent='Erro: '+(e.message||'Tente novamente.');msg.style.color='#f44336';
-  });
-  setTimeout(function(){prog.style.display='none';fill.style.width='0';},5000);
   input.value='';
 }
 
-function renderViaturas(){
-  // Compatibilidade: delega para renderMontadoras se disponível
-  if(typeof renderMontadoras === 'function') renderMontadoras();
-}
-function selecionarViatura(v){
-  viatura=v;sistemaAtivo=null;
-  document.getElementById('t-via').textContent='Diagnostico: '+v.nome;
-  document.getElementById('busca').value='';
-  document.getElementById('panes-lista').innerHTML='';
-  ['a-diag','a-prev','a-fav'].forEach(function(a,i){var el=document.getElementById(a);if(el)el.style.display=i===0?'block':'none';});
-  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.remove('on');if(i===0)t.classList.add('on');});
-  renderSistemas();
-  var sel=document.getElementById('ia-filtro');if(sel)sel.value=v.id;
-  go('s-diag');
-}
-function renderSistemas(){
-  var g=document.getElementById('sis-grid');g.innerHTML='';
-  SISTEMAS.forEach(function(s){
-    var d=document.createElement('div');d.className='sis-btn';
-    d.innerHTML='<div class="ic">'+s.icon+'</div><span>'+s.nome+'</span>';
-    d.onclick=function(){selecionarSistema(s.id,d);};g.appendChild(d);
-  });
-}
-function selecionarSistema(id,btn){
-  sistemaAtivo=id;
-  document.querySelectorAll('.sis-btn').forEach(function(b){b.classList.remove('on');});
-  if(btn)btn.classList.add('on');
-  renderPanes(id);
-}
-function renderPanes(sist){
-  var lista=document.getElementById('panes-lista');
-  var panes=PANES[sist]||[];
-  if(!panes.length){lista.innerHTML='<div class="empty">Nenhuma pane cadastrada.</div>';return;}
-  lista.innerHTML='';
-  panes.forEach(function(p){
-    var cor={c:'#f44336',a:'#FFC107',m:'#ff9800',b:'#4CAF50'}[p.sev]||'#247ba0';
-    var sevTxt={c:'CRITICA',a:'ALTA',m:'MEDIA',b:'BAIXA'}[p.sev]||'';
-    var specsH=p.specs&&Object.keys(p.specs).length?'<div class="specs">'+Object.entries(p.specs).map(function(e){return '<div class="spec"><strong>'+e[0]+'</strong><span>'+e[1]+'</span></div>';}).join('')+'</div><br>':'';
-    var testesH='<ul class="tlist">'+p.testes.map(function(t,i){return '<li><span class="tnum">'+(i+1)+'</span>'+t+'</li>';}).join('')+'</ul>';
-    var solH=p.solucoes?'<h4 style="color:#4CAF50;margin:8px 0 6px;font-size:11px">SOLUCOES:</h4><ul class="tlist">'+p.solucoes.map(function(s,i){return '<li><span class="tnum" style="background:#4CAF50">'+(i+1)+'</span>'+s+'</li>';}).join('')+'</ul>':'';
-    var relH=p.rel&&p.rel.length?'<p style="margin-top:8px;font-size:11px;color:#888">Rel: '+p.rel.map(function(r){return '<span class="tag-rel">'+r+'</span>';}).join('')+'</p>':'';
-    var d=document.createElement('div');d.className='pane-item';d.style.borderLeftColor=cor;
-    d.innerHTML='<div class="pane-hdr" onclick="togglePane(this)"><h3>'+p.nome+'</h3><span class="sev '+p.sev+'">'+sevTxt+'</span></div>'+
-      '<div class="pane-body"><p style="margin-bottom:8px">'+p.desc+'</p>'+specsH+
-      '<h4 style="color:#ff9800;margin-bottom:6px;font-size:11px">TESTES:</h4>'+testesH+solH+relH+'</div>';
-    lista.appendChild(d);
-  });
-}
-function togglePane(h){h.nextElementSibling.classList.toggle('open');}
-
-document.getElementById('busca').addEventListener('input',function(){
-  var q=this.value.trim();
-  if(!q){document.getElementById('panes-lista').innerHTML='';return;}
-  var ql=q.toLowerCase();
-  var cod=q.toUpperCase().replace(/\s/g,'');
-  if(CODIGOS_OBD[cod]){
-    var c=CODIGOS_OBD[cod];
-    // Buscar pane relacionada ao código
-    var paneRelHTML='';
-    Object.keys(PANES).forEach(function(sist){
-      PANES[sist].forEach(function(p){
-        if(p.nome.toUpperCase().indexOf(cod)>=0||
-           (p.testes&&p.testes.some(function(t){return t.toUpperCase().indexOf(cod)>=0;}))||
-           (p.desc&&p.desc.toUpperCase().indexOf(cod)>=0)){
-          var cor={c:'#f44336',a:'#FFC107',m:'#ff9800',b:'#4CAF50'}[p.sev]||'#247ba0';
-          var sevTxt={c:'CRITICA',a:'ALTA',m:'MEDIA',b:'BAIXA'}[p.sev]||'';
-          var specsH=p.specs&&Object.keys(p.specs).length?'<div class="specs">'+Object.entries(p.specs).map(function(e){return '<div class="spec"><strong>'+e[0]+'</strong><span>'+e[1]+'</span></div>';}).join('')+'</div>':'' ;
-          var testesH='<ul class="tlist">'+p.testes.map(function(t,i){return '<li><span class="tnum">'+(i+1)+'</span>'+t+'</li>';}).join('')+'</ul>';
-          var solH=p.solucoes?'<h4 style="color:#4CAF50;margin:8px 0 4px;font-size:11px">SOLUCOES:</h4><ul class="tlist">'+p.solucoes.map(function(s,i){return '<li><span class="tnum" style="background:#4CAF50">'+(i+1)+'</span>'+s+'</li>';}).join('')+'</ul>':'';
-          paneRelHTML='<div class="pane-item" style="border-left-color:'+cor+';margin-top:12px">'+
-            '<div class="pane-hdr" onclick="togglePane(this)"><h3>'+p.nome+'</h3><span class="sev '+p.sev+'">'+sevTxt+'</span></div>'+
-            '<div class="pane-body open"><p style="margin-bottom:8px">'+p.desc+'</p>'+specsH+
-            '<h4 style="color:#ff9800;margin:8px 0 4px;font-size:11px">TESTES:</h4>'+testesH+solH+'</div></div>';
-        }
-      });
-    });
-    // Buscar também em Common Rail se for código rail
-    var crHTML='';
-    if(CR_AM21&&CR_AM21.codigos&&CR_AM21.codigos[cod]){
-      crHTML='<div class="dsec"><h3>🔧 Contexto Common Rail</h3>'+
-        '<p>'+CR_AM21.codigos[cod]+'</p>'+
-        '<div class="specs">'+
-        '<div class="spec"><strong>Partida</strong><span>'+CR_AM21.pressao.partida+'</span></div>'+
-        '<div class="spec"><strong>Ralenti</strong><span>'+CR_AM21.pressao.marcha_lenta+'</span></div>'+
-        '<div class="spec"><strong>Aceleração</strong><span>'+CR_AM21.pressao.aceleracao+'</span></div>'+
-        '</div>'+
-        '<h4 style="color:#ff9800;margin:8px 0 4px;font-size:11px">SEQUÊNCIA DIAGNÓSTICO:</h4>'+
-        '<ul class="tlist">'+CR_AM21.sequencia.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ul>'+
-        '</div>';
-    }
-    document.getElementById('panes-lista').innerHTML='<div class="dbox"><h2>Código OBD: '+cod+'</h2>'+
-      '<div class="dsec"><h3>Descrição</h3><p>'+c.loc+'</p></div>'+
-      '<div class="dsec"><h3>Possível Causa</h3><p>'+c.causa+'</p></div></div>'+
-      crHTML+paneRelHTML;return;
-  }
-  if(ql.indexOf('rail')>=0||ql.indexOf('scv')>=0||ql.indexOf('common')>=0||ql.indexOf('pressao')>=0||ql.indexOf('m-prop')>=0){
-    var cr=CR_AM21;
-    document.getElementById('panes-lista').innerHTML='<div class="dbox"><h2>Common Rail AM21</h2>'+
-      '<div class="dsec"><h3>Pressao Rail</h3><div class="specs">'+
-      '<div class="spec"><strong>Partida</strong><span>'+cr.pressao.partida+'</span></div>'+
-      '<div class="spec"><strong>Marcha Lenta</strong><span>'+cr.pressao.marcha_lenta+'</span></div>'+
-      '<div class="spec"><strong>Aceleracao</strong><span>'+cr.pressao.aceleracao+'</span></div>'+
-      '</div></div>'+
-      '<div class="dsec"><h3>SCV M-Prop</h3><div class="specs">'+
-      '<div class="spec"><strong>Normal</strong><span>'+cr.scv.normal+'</span></div>'+
-      '<div class="spec"><strong>Ideal</strong><span>'+cr.scv.ideal+'</span></div>'+
-      '<div class="spec"><strong>Curto</strong><span>'+cr.scv.curto+'</span></div>'+
-      '<div class="spec"><strong>Bobina Aberta</strong><span>'+cr.scv.aberta+'</span></div>'+
-      '</div></div>'+
-      '<div class="dsec"><h3>Sequencia Diagnostico</h3><ul class="tlist">'+cr.sequencia.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ul></div>'+
-      '<div class="dsec"><h3>Problemas Comuns</h3><ul class="tlist">'+cr.comuns.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ul></div></div>';return;
-  }
-  if(ql.indexOf('preventiva')>=0||ql.indexOf('oleo')>=0||ql.indexOf('manutencao')>=0||ql.indexOf('revisao')>=0||ql.indexOf('filtro')>=0){
-    var vid=viatura?viatura.id:'am21';
-    var pv=PREVENTIVA[vid]||PREVENTIVA['am21'];
-    document.getElementById('panes-lista').innerHTML='<div class="dbox"><h2>Preventiva '+pv.nome+'</h2>'+
-      '<div class="dsec"><h3>Oleo Motor</h3><p>'+pv.oleo.tipo+'<br>Capacidade: '+pv.oleo.capacidade+'<br>Troca: '+pv.oleo.troca+(pv.oleo.severo?'<br>Severo: '+pv.oleo.severo:'')+'</p></div>'+
-      '<div class="dsec"><h3>Falhas Frequentes</h3><ul class="tlist">'+(pv.falhas||[]).map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></div></div>';return;
-  }
-  if(ql.indexOf('bateria')>=0){
-    document.getElementById('panes-lista').innerHTML='<div class="dbox"><h2>Bateria 12V</h2>'+
-      '<div class="dsec"><h3>Dados Tecnicos</h3><div class="specs">'+
-      '<div class="spec"><strong>Vida util</strong><span>2 a 5 anos</span></div>'+
-      '<div class="spec"><strong>Tensao min</strong><span>22V em repouso</span></div>'+
-      '<div class="spec"><strong>Motor ligado</strong><span>27-28V</span></div>'+
-      '<div class="spec"><strong>Capacidade</strong><span>60Ah Marrua AM21</span></div>'+
-      '</div></div>'+
-      '<div class="dsec"><h3>Quando Trocar</h3><ul class="tlist"><li>Nao segura carga apos 8h de carregamento</li><li>Tensao em repouso abaixo de 21V</li><li>Mais de 4 anos de uso</li><li>Terminais com sulfatacao intensa</li></ul></div>'+
-      '<div class="dsec"><h3>Manutencao</h3><ul class="tlist"><li>Verificar terminais semanalmente</li><li>Limpar oxidacao com bicarbonato de sodio</li><li>Verificar tensao com voltimetro ou scanner</li></ul></div></div>';return;
-  }
-  if(ql.indexOf('checklist')>=0||ql.indexOf('diario')>=0){
-    document.getElementById('panes-lista').innerHTML='<div class="dbox"><h2>Checklist Diario</h2>'+
-      '<ul class="tlist">'+CHECKLIST.map(function(c,i){return '<li><span class="tnum">'+(i+1)+'</span>'+c+'</li>';}).join('')+'</ul></div>';return;
-  }
-  var res=[];
-  Object.keys(PANES).forEach(function(sist){
-    PANES[sist].forEach(function(p){
-      var solStr=(p.solucoes||[]).join(' ').toLowerCase();
-      var relStr=(p.rel||[]).join(' ').toLowerCase();
-      var specsStr=p.specs?Object.values(p.specs).join(' ').toLowerCase():'';
-      if(p.nome.toLowerCase().indexOf(ql)>=0||p.desc.toLowerCase().indexOf(ql)>=0||
-        p.testes.some(function(t){return t.toLowerCase().indexOf(ql)>=0;})||
-        solStr.indexOf(ql)>=0||relStr.indexOf(ql)>=0||specsStr.indexOf(ql)>=0){
-        res.push(Object.assign({},p,{_sist:sist}));
-      }
-    });
-  });
-  var lista=document.getElementById('panes-lista');
-  if(!res.length){lista.innerHTML='<div class="empty">Sem resultado. Tente: nao liga, P0087, alternador, turbo, bateria...</div>';return;}
-  lista.innerHTML='';
-  res.forEach(function(p){
-    var cor={c:'#f44336',a:'#FFC107',m:'#ff9800',b:'#4CAF50'}[p.sev]||'#247ba0';
-    var sevTxt={c:'CRITICA',a:'ALTA',m:'MEDIA',b:'BAIXA'}[p.sev]||'';
-    var d=document.createElement('div');d.className='pane-item';d.style.borderLeftColor=cor;
-    d.innerHTML='<div class="pane-hdr" onclick="togglePane(this)"><h3>'+p.nome+'</h3><span class="sev '+p.sev+'">'+sevTxt+'</span></div>'+
-      '<div class="pane-body"><p>'+p.desc+'</p><ul class="tlist" style="margin-top:8px">'+p.testes.map(function(t,i){return '<li><span class="tnum">'+(i+1)+'</span>'+t+'</li>';}).join('')+'</ul></div>';
-    lista.appendChild(d);
-  });
-});
-
-function renderPreventiva(){
-  if(!viatura)return;
-  var p=PREVENTIVA[viatura.id];
-  var cont=document.getElementById('prev-conteudo');
-  document.getElementById('prev-titulo').textContent='Preventiva: '+viatura.nome;
-  if(!p){cont.innerHTML='<p style="color:#888">Dados nao disponiveis.</p>';return;}
-  var html='<div class="dsec"><h3>Oleo Motor</h3><div class="prev-grid">'+
-    '<div class="prev-item"><strong>Tipo</strong><span>'+p.oleo.tipo+'</span></div>'+
-    '<div class="prev-item"><strong>Capacidade</strong><span>'+p.oleo.capacidade+'</span></div>'+
-    '<div class="prev-item"><strong>Troca</strong><span>'+p.oleo.troca+'</span></div>'+
-    (p.oleo.severo?'<div class="prev-item"><strong>Uso Severo</strong><span>'+p.oleo.severo+'</span></div>':'')+
-    '</div></div>';
-  if(p.filtros)html+='<div class="dsec"><h3>Filtros</h3><div class="prev-grid">'+p.filtros.map(function(f){return '<div class="prev-item"><strong>'+f.nome+'</strong><span>'+f.intervalo+'</span></div>';}).join('')+'</div></div>';
-  if(p.freios&&p.freios.obs)html+='<div class="dsec"><h3>Freios</h3><p style="color:var(--gray);font-size:13px;line-height:1.7">'+(p.freios.fluido?'Fluido: '+p.freios.fluido+'<br>':'')+(p.freios.troca?'Troca: '+p.freios.troca+'<br>':'')+p.freios.obs+'</p></div>';
-  else if(p.freios)html+='<div class="dsec"><h3>Freios</h3><p style="color:var(--gray);font-size:13px;line-height:1.7">'+(p.freios.fluido?'Fluido: '+p.freios.fluido+'<br>':'')+(p.freios.troca?'Troca: '+p.freios.troca:'')+'</p></div>';
-  if(p.transmissao)html+='<div class="dsec"><h3>Transmissao</h3><p style="color:var(--gray);font-size:13px;line-height:1.7">'+(p.transmissao.cambio||'')+(p.transmissao.cambio?'<br>':'')+(p.transmissao.automatica||'')+(p.transmissao.obs||'')+(p.transmissao.diferenciais||'')+'</p></div>';
-  if(p.combustivel)html+='<div class="dsec"><h3>Combustivel</h3><p style="color:var(--gray);font-size:13px;line-height:1.7">'+p.combustivel.obs+'</p></div>';
-  if(p.falhas)html+='<div class="dsec"><h3>Falhas Frequentes</h3><ul class="tlist">'+p.falhas.map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></div>';
-  html+='<div class="dsec"><h3>Checklist Diario</h3><ul class="tlist">'+CHECKLIST.map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul></div>';
-  cont.innerHTML=html;
-}
-
-// Aba ativa da biblioteca
-var _bibNv = 'eletrica-basica';
-function bibAba(btn){
-  document.querySelectorAll('.bib-tab').forEach(function(b){b.classList.remove('on');});
-  btn.classList.add('on');
-  _bibNv = btn.getAttribute('data-nv');
-  renderCursos();
-}
-
-// Cliques secretos no cadeado para acesso admin
-var _lockClicks=0,_lockTimer=null;
-function bibLockClick(){
-  _lockClicks++;
-  if(_lockTimer)clearTimeout(_lockTimer);
-  _lockTimer=setTimeout(function(){_lockClicks=0;},2000);
-  if(_lockClicks>=3){
-    _lockClicks=0;
-    if(!document.body.classList.contains('is-admin')) abrirAdmin();
-    else document.getElementById('modal-adm').style.display='flex';
-  }
-}
-
-function renderCursos(){
-  var container=document.getElementById('dlist-cursos');
-  if(!container)return;
-  var isAdmin=document.body.classList.contains('is-admin');
-  var nv=_bibNv||'eletrica-basica';
-
-  var docs=_docs.filter(function(d){return (d.nivel||d.cat||'geral')===nv;});
-
-  var btnAdmin=isAdmin?
-    '<div style="margin-bottom:14px">'+
-    '<button onclick="abrirModalAdm()" style="background:linear-gradient(135deg,#1b5e20,#4CAF50);color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">'+
-    '+ Adicionar PDF nesta categoria</button></div>':'';
-
-  if(!docs.length){
-    container.innerHTML=btnAdmin+'<div class="empty">Nenhum documento nesta categoria ainda.</div>';
-    return;
-  }
-
-  var html=btnAdmin;
-  docs.forEach(function(d){
-    var badgeIdx=d.tem_texto===false?
-      '<span style="font-size:10px;background:#ff9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">📷 imagem</span>':
-      (d.tem_texto===true?'<span style="font-size:10px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">✓ indexado</span>':'');
-    var via=d.viatura_id&&d.viatura_id!=='geral'?
-      '<span style="font-size:10px;color:var(--tx2);background:var(--bg2);padding:1px 6px;border-radius:8px;margin-left:4px">'+d.viatura_id+'</span>':'';
-    html+='<div class="ditem">'+
-      '<div style="flex:1">'+
-      '<strong style="font-size:14px">'+d.nome+'</strong>'+badgeIdx+via+
-      '<br><small style="color:var(--tx2)">'+(d.tamanho||'')+(d.paginas?' · '+d.paginas+' pág.':'')+'</small>'+
-      '</div>'+
-      '<div class="dbtn-row" style="margin-top:10px">'+
-      (d.arquivo_url?'<button onclick="abrirPDFBtn(this)" data-url="'+d.arquivo_url+'" data-nome="'+d.nome.replace(/"/g,'')+'" class="dbtn">📖 Visualizar</button>':'')+
-      (isAdmin?'<button data-id="'+d.id+'" onclick="deletarDoc(this)" class="dbtn red">Deletar</button>':'')+
-      '</div></div>';
-  });
-  container.innerHTML=html;
-}
-function deletarDoc(btn){
-  if(!confirm('Deletar este documento?'))return;
-  var id=btn.getAttribute('data-id');
-  _docs=_docs.filter(function(d){return d.id!==id;});
-  localStorage.setItem('oi_docs',JSON.stringify(_docs));
-  // Guarda IDs deletados para evitar que o docs.json remoto os traga de volta
-  var deletados=JSON.parse(localStorage.getItem('oi_deleted')||'[]');
-  if(deletados.indexOf(id)===-1) deletados.push(id);
-  localStorage.setItem('oi_deleted',JSON.stringify(deletados));
-  renderCursos();
-}
 function renderFavs(){
   var g=document.getElementById('fav-list');
   if(!favs.length){g.innerHTML='<div class="empty">Nenhum favorito ainda.</div>';return;}
