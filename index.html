@@ -619,6 +619,7 @@ var VIATURAS=[
   {id:'am21',nome:'Marrua AM21',ic:'&#128665;'},
   {id:'am20',nome:'Marrua AM20',ic:'&#128665;'},
   {id:'am23',nome:'Marrua AM23',ic:'&#128665;'},
+  {id:'am31',nome:'Marrua AM31',ic:'&#128665;'},
   {id:'atego',nome:'Atego',ic:'&#128666;'},
   {id:'hilux',nome:'Hilux Ambulancia',ic:'&#128657;'},
   {id:'hilux25',nome:'Hilux 2.5 (2KD-FTV)',ic:'&#128665;'},
@@ -663,6 +664,22 @@ var PREVENTIVA={
       'Batidas no diferencial - verificar nivel oleo SAE 90 GL-5',
       'Chicote dianteiro oxidado - cód. 6011.011.027.00.1',
       'Lâmpadas 24V substituidas por 12V - instrumentos com leitura errada']},
+  am31:{nome:'Marrua AM31 - Cummins ISF 2.8',oleo:{tipo:'SAE 15W40 API CI-4 ou superior (motor Cummins ISF 2.8)',capacidade:'5.5 litros com filtro (cárter conforme ficha técnica)',troca:'10.000 km ou 6 meses em uso normal / 5.000 km em uso severo (campo)',severo:'5.000 km em operacoes off-road'},
+    filtros:[
+      {nome:'Filtro de Óleo Motor',intervalo:'A cada troca de óleo - verificar cárter 5.5L'},
+      {nome:'Filtro de Combustível',intervalo:'Verificar semanal / Drenar água diariamente antes da 1ª partida / Trocar 10.000 km'},
+      {nome:'Filtro de Ar',intervalo:'Limpar por sopragem periodicamente / Substituir por saturação'},
+      {nome:'Óleo Câmbio EATON FS 2305 C',intervalo:'SAE 80W90 GL-4 - verificar nível a cada 20.000 km - capacidade 3.5L'},
+      {nome:'Óleo Diferencial Traseiro DANA M286',intervalo:'SAE 90 GL-5 - verificar mensalmente - capacidade 3.9L - Power Lock'},
+      {nome:'Óleo Diferencial Dianteiro DANA 44-3',intervalo:'SAE 90 GL-5 - verificar mensalmente - capacidade 1.8L'},
+      {nome:'Óleo Caixa de Transferência',intervalo:'SAE 80W90 GL-4 - verificar periodicamente - capacidade 1.9L'},
+      {nome:'Fluido de Freio',intervalo:'DOT 3 ou DOT 4 - verificar nível mensalmente - trocar a cada 2 anos'},
+      {nome:'Fluido de Embreagem',intervalo:'DOT 3 ou DOT 4 - embreagem hidráulica - verificar nível'}
+    ],
+    freios:{fluido:'DOT 3 ou DOT 4',troca:'A cada 2 anos',obs:'DIANTEIRO: disco com pinça servoassistida. TRASEIRO: tambor. Verificar pastilhas (mínimo 3mm), lonas e mangueiras. Pedal esponjoso indica ar no sistema - sangrar. Verificar servofreno e bomba mestre.'},
+    transmissao:{cambio:'EATON FS 2305 C - 5 marchas + Ré. SAE 80W90 GL-4 - 3.5L. Verificar nível pelo bujão lateral.',diferenciais:'DANA 44-3 dianteiro (4.09:1) + DANA M286 traseiro (4.10:1) com Power Lock. SAE 90 GL-5. Verificar nível mensalmente.',obs:'CAIXA DE TRANSFERÊNCIA: manual dupla velocidade - relação (2:1) reduzida / (1:1) direta. Verificar óleo 1.9L. CARDAN: verificar cruzetas e folga radial. Lubrificar pontos com engaxetadeira conforme manual. Power Lock traseiro: verificar atuação correta.'},
+    combustivel:{obs:'Tanque único 95L. Drenar água do filtro de combustível DIARIAMENTE antes da 1ª partida em campo. Injeção eletrônica Cummins ISF 2.8 - não fazer reparos sem scanner. Verificar pressão de combustível. Turbo: aguardar 3-5 min em ralenti antes de desligar quando quente.'},
+    falhas:['Sistema 12V com Elevador de Tensão 24V - não confundir componentes','Elevador de tensão 24V com defeito afeta tomadas e acessórios militares','Filtro de combustível saturado - motor engasga sob carga','Ar no sistema de freio hidráulico - pedal esponjoso','Diferencial traseiro Power Lock não engata - verificar atuador','Caixa de transferência em neutro - verificar seletor','Cruzeta do cardan com folga - vibração acima de 60 km/h','Injeção eletrônica Cummins - verificar códigos com scanner antes de substituir peças','Embreagem hidráulica - verificar nível DOT no reservatório','Superaquecimento - verificar nível líquido refrigerante e termostato']},
   am23:{nome:'Marrua AM23',oleo:{tipo:'SAE 15W40 API CI-4 ou superior',capacidade:'~8 litros com filtro',troca:'10.000 km ou 6 meses',severo:'5.000 km'},
     filtros:[{nome:'Filtro de Oleo',intervalo:'Toda troca de oleo'},{nome:'Filtro Diesel',intervalo:'Trocar 10.000 km'},{nome:'Filtro de Ar',intervalo:'Conforme saturacao'}],
     freios:{fluido:'Verificar mensalmente',troca:'A cada 2 anos'},
@@ -1244,6 +1261,86 @@ Object.keys(PANES_HILUX).forEach(function(sist){
 
 
 ;
+
+
+// ===== PANES MARRUA AM31 — Cummins ISF 2.8 / Ficha Técnica Agrale =====
+var PANES_AM31 = {
+  eletrica:[
+    {id:'am31e1',nome:'Bateria fraca — sistema 12V/70Ah',sev:'c',
+     loc:'Bateria: 1x 12V / 70Ah — compartimento motor',
+     desc:'AM31 usa sistema 12V com 1 bateria de 70Ah. ATENÇÃO: possui Elevador de Tensão 24V para acessórios militares (tomada 12 pinos, guincho, snorkel etc). Bateria fraca não parte o motor e pode falhar o elevador de tensão.',
+     specs:{'Tensão do sistema':'12V','Bateria':'1x 12V / 70Ah','Alternador':'120A','Elevador de Tensão':'24V (para acessórios militares)','Tensão em repouso':'12,4V a 12,7V (carga ok)','Tensão mínima partida':'>10,5V durante cranking'},
+     testes:['Medir tensão em repouso: 12,4-12,7V = boa / abaixo de 12V = fraca','Ligar motor: tensão deve subir para 13,8-14,5V (alternador carregando)','Se não subir: verificar alternador 120A e correias','Verificar elevador de tensão 24V: medir saída no conector — deve ter ~24V','Limpar terminais: oxidação é causa comum de falha de partida no campo','Teste de carga: bateria deve manter >10,5V ao cranking'],
+     solucoes:['Substituir bateria 12V/70Ah','Verificar alternador 120A','Limpar e apertar terminais','Verificar e substituir elevador de tensão 24V se acessórios militares falharem','Verificar cabo massa chassi-motor'],
+     rel:['Motor de partida','Alternador','Elevador de tensão 24V','Imobilizador eletrônico Cummins']},
+
+    {id:'am31e2',nome:'Alternador 120A com defeito',sev:'a',
+     loc:'Motor Cummins ISF 2.8 — lado direito do motor',
+     desc:'Alternador 120A — tensão de saída deve ser 13,8-14,5V com motor em funcionamento. Falha causa descarga da bateria e pode afetar a injeção eletrônica Cummins.',
+     specs:{'Amperagem':'120A','Tensão de saída':'13,8 a 14,5V','RPM mínima':'~600 RPM','Sistema':'12V'},
+     testes:['Com motor ligado em ralenti: medir tensão na bateria — deve ser 13,8-14,5V','Abaixo de 13V: alternador não está carregando','Verificar correia do alternador (tensão e desgaste)','Verificar diodos do alternador com multímetro (modo AC: deve ser <0,5V)','Verificar fusível do alternador na caixa de fusíveis'],
+     solucoes:['Substituir alternador','Substituir correia','Reparar fiação D+','Verificar regulador de tensão'],
+     rel:['Bateria 12V/70Ah','Correias do motor','Caixa de fusíveis']},
+
+    {id:'am31e3',nome:'Elevador de tensão 24V com defeito',sev:'m',
+     loc:'Chassi/cabine — componente específico do AM31 para acessórios militares',
+     desc:'O AM31 possui sistema 12V mas inclui Elevador de Tensão 24V para alimentar acessórios militares (tomada 12 pinos, guincho D, snorkel D, partida à distância D). Falha neste componente deixa acessórios inoperantes sem afetar o motor.',
+     specs:{'Entrada':'12V (bateria)','Saída':'24V','Aplicação':'Tomada 12 pinos / Guincho / Snorkel / Partida à distância','Série no AM31':'Tomada 12 pinos = NS (Normal de Série)'},
+     testes:['Verificar tensão de entrada (12V) no elevador','Verificar tensão de saída (24V) — deve ser ~24V','Verificar fusíveis do elevador','Verificar conexões e chicote do componente','Testar cada acessório 24V individualmente para isolar falha'],
+     solucoes:['Substituir elevador de tensão','Verificar fusíveis e relés associados','Reparar chicote elétrico'],
+     rel:['Bateria 12V','Tomada 12 pinos','Guincho','Snorkel']},
+
+    {id:'am31e4',nome:'Sistema de injeção eletrônica Cummins ISF 2.8',sev:'c',
+     loc:'ECM Cummins — motor ISF 2.8 / conector diagnose',
+     desc:'Motor Cummins ISF 2.8 com injeção eletrônica e controle PROCONVE P5/EURO III. Falhas na injeção causam perda de potência, fumaça preta, consumo excessivo ou motor que não parte. Diagnose OBRIGATÓRIA por scanner antes de qualquer substituição.',
+     specs:{'Motor':'Cummins ISF 2.8 — 4 cil em linha','Potência':'110kW (150cv) a 3.200 RPM','Torque':'360Nm de 1.800 a 2.700 RPM','Cilindrada':'2.800 cm³','Emissões':'PROCONVE P5 / EURO III','Combustível':'Diesel S10 recomendado'},
+     testes:['Conectar scanner Cummins/OBD2 e ler códigos de falha ANTES de qualquer diagnose','Verificar pressão de combustível (filtros limpos)','Verificar sensor de rotação (CKP) e fase (CMP)','Verificar temperatura do motor (sensor NTC)','Verificar pressão do turbo (sensor MAP)','Nunca substituir injetores sem diagnose — são calibrados individualmente'],
+     solucoes:['Diagnose com scanner específico Cummins','Substituir filtros de combustível','Verificar e limpar sensores','Seguir código de falha para substituição direcionada','Não fazer reparos na bomba injetora sem equipamento específico'],
+     rel:['Filtro combustível','Sensor CKP/CMP','Sensor temperatura','Turbo','ECM Cummins']}
+  ],
+  mecanica:[
+    {id:'am31m1',nome:'Freio servoassistido — disco dianteiro / tambor traseiro',sev:'c',
+     loc:'Dianteiro: pinça de disco servoassistida / Traseiro: tambor com alavanca estacionamento',
+     desc:'AM31 usa freio a disco na frente e tambor atrás com servofreno hidráulico. Pedal esponjoso indica ar no sistema. Freio de estacionamento por alavanca/cabo mecânico.',
+     specs:{'Dianteiro':'Disco com pinça hidráulica servoassistida','Traseiro':'Tambor hidráulico','Estacionamento':'Alavanca/cabo mecânico','Fluido':'DOT 3 ou DOT 4','Pastilhas mínimas':'3mm'},
+     testes:['Pedal esponjoso: sangrar sistema — ar nas canalizações','Verificar nível fluido no reservatório (DOT 3/DOT 4)','Medir espessura das pastilhas: mínimo 3mm','Verificar lonas do tambor traseiro','Verificar servofreno: com motor desligado, pressionar pedal 5x — deve endurecer'],
+     solucoes:['Sangrar sistema de freio','Completar fluido DOT 3/4','Substituir pastilhas (mínimo 3mm)','Substituir lonas do tambor','Verificar/substituir servofreno','Ajustar cabo do freio de estacionamento'],
+     rel:['Reservatório de fluido','Bombas de roda','Servofreno']},
+
+    {id:'am31m2',nome:'Transmissão EATON FS 2305 C — engates difíceis ou ruídos',sev:'m',
+     loc:'Câmbio EATON FS 2305 C — 5 marchas / Caixa de transferência manual dupla velocidade',
+     desc:'Câmbio EATON de 5 marchas + caixa de transferência com redução (2:1) e direta (1:1). Embreagem orgânica monodisco hidráulica de 300mm. Problemas comuns: engate difícil em reduzida, sincronizadores desgastados, embreagem sem curso.',
+     specs:{'Câmbio':'EATON FS 2305 C','Marchas':'5 Frente + 1 Ré','Caixa Transferência':'Manual - Reduzida (2:1) / Direta (1:1)','Embreagem':'Monodisco orgânica 300mm — hidráulica','Óleo câmbio':'SAE 80W90 GL-4 — 3.5L'},
+     testes:['Verificar nível óleo câmbio (SAE 80W90 GL-4 — 3.5L)','Verificar curso livre do pedal de embreagem','Verificar fluido do cilindro mestre da embreagem (DOT)','Caixa de transferência: verificar engate das duas posições (direta e reduzida)','Verificar seletor de transferência por desgaste e folga'],
+     solucoes:['Completar óleo câmbio SAE 80W90 GL-4','Ajustar curso da embreagem','Sangrar circuito hidráulico da embreagem','Substituir sincronizadores com desgaste','Verificar garfo e atuadores da caixa de transferência'],
+     rel:['Embreagem hidráulica','Caixa de transferência','Cardan']},
+
+    {id:'am31m3',nome:'Eixos DANA — diferencial Power Lock e tração dianteira',sev:'m',
+     loc:'DANA 44-3 dianteiro (rel. 4.09:1) / DANA M286 traseiro (rel. 4.10:1 com Power Lock)',
+     desc:'Eixo dianteiro DANA 44-3 do tipo Open (tração opcional). Eixo traseiro DANA M286 com bloqueio Power Lock. Falhas: diferencial não bloqueia, ruídos em curva, vazamento de óleo pelos retentores.',
+     specs:{'Eixo Dianteiro':'DANA 44-3 — Open Type — relação 4.09:1','Eixo Traseiro':'DANA M286 — Power Lock — relação 4.10:1','Óleo dianteiro':'SAE 90 GL-5 — 1.8L','Óleo traseiro':'SAE 90 GL-5 — 3.9L','Power Lock':'Bloqueio mecânico automático por torque'},
+     testes:['Verificar nível de óleo dianteiro (1.8L SAE 90 GL-5) e traseiro (3.9L)','Verificar Power Lock: em off-road, ambas as rodas traseiras devem traccionar','Verificar retentores por vazamento nos pinhões e semieixos','Ruído em curva: retentor ou rolamento desgastado','Vibração: verificar folga nos semieixos e cruzetas'],
+     solucoes:['Completar óleo SAE 90 GL-5','Substituir retentores com vazamento','Verificar Power Lock (mecanismo interno)','Substituir rolamentos com ruído','Verificar cruzetas e semieixos'],
+     rel:['Caixa de transferência','Cardan','Cubos de roda dianteira']}
+  ],
+  combustivel:[
+    {id:'am31c1',nome:'Sistema combustível — Cummins ISF 2.8 / tanque 95L',sev:'a',
+     loc:'Tanque único 95L / Filtro de combustível / Bomba elétrica de combustível',
+     desc:'Tanque único de 95L. Injeção eletrônica Cummins ISF 2.8 com filtro de combustível com separador de água. Drenar água DIARIAMENTE em campo. Diesel contaminado destrói bicos injetores.',
+     specs:{'Tanque':'95 litros — tanque único','Combustível':'Diesel (S10 recomendado)','Sistema':'Injeção eletrônica Cummins','Cárter motor':'5.5 litros','Caixa câmbio':'3.5L','Diferencial traseiro':'3.9L','Eixo dianteiro':'1.8L','Transferência':'1.9L'},
+     testes:['Drenar água do filtro DIARIAMENTE — especialmente em campo','Verificar cor do diesel: turvo = água contaminada','Verificar pressão de combustível com manômetro ou scanner','Verificar filtro entupido: motor engasga sob carga ou em subida','Com scanner: verificar pressão no rail de injeção'],
+     solucoes:['Drenar e substituir filtro de combustível','Limpar tanque se contaminado','Usar somente diesel S10','Seguir diagnose eletrônica para problemas na bomba/bicos'],
+     rel:['ECM Cummins','Filtro de ar','Turbo ISF 2.8']}
+  ]
+};
+
+// Mesclar PANES_AM31
+Object.keys(PANES_AM31).forEach(function(sist){
+  if(PANES[sist]){
+    PANES[sist]=PANES[sist].filter(function(p){return !/^am31/.test(p.id);});
+    PANES[sist]=PANES[sist].concat(PANES_AM31[sist]);
+  }
+});
 
 // ===== PANES ATEGO ELÉTRICA - Manual DaimlerChrysler Global Training =====
 var PANES_ATEGO = {
@@ -1838,12 +1935,12 @@ document.getElementById('ia-inp').addEventListener('keypress',function(e){if(e.k
 // ============================================================
 
 var MONTADORAS = [
-  {id:'agrale', nome:'Agrale', logo:'🚙', cor:'#1E3A5F', modelos:['am21','am20','am23'], desc:'Marruá AM20/21/23'},
+  {id:'agrale', nome:'Agrale', logo:'🚙', cor:'#1E3A5F', modelos:['am21','am20','am23','am31'], desc:'Marruá AM20/21/23/31'},
   {id:'toyota', nome:'Toyota', logo:'🚑', cor:'#DC2626', modelos:['hilux','hilux25','hilux30'], desc:'Hilux Ambulância / 2.5 / 3.0'},
   {id:'mercedes', nome:'Mercedes-Benz', logo:'🚚', cor:'#1a1a1a', modelos:['atego'], desc:'Atego'},
   {id:'landrover', nome:'Land Rover', logo:'🚗', cor:'#2d5a27', modelos:['lr'], desc:'Série Defender'},
   {id:'volkswagen', nome:'Volkswagen', logo:'🚛', cor:'#1B4F8A', modelos:['worker'], desc:'Worker 8-160/13-180/17-250'},
-  {id:'todas', nome:'Todas', logo:'⚙️', cor:'#6B7280', modelos:['am21','am20','am23','hilux','hilux25','hilux30','atego','lr','worker'], desc:'Ver todas as viaturas'}
+  {id:'todas', nome:'Todas', logo:'⚙️', cor:'#6B7280', modelos:['am21','am20','am23','am31','hilux','hilux25','hilux30','atego','lr','worker'], desc:'Ver todas as viaturas'}
 ];
 
 var montadoraAtual = null;
@@ -2044,7 +2141,11 @@ function exportarDocs(){
 // Abre modal admin (helper sem aspas problemáticas)
 function abrirModalAdm(){
   var m=document.getElementById('modal-adm');
-  if(m) m.style.display='flex';
+  if(!m) return;
+  // Pré-seleciona automaticamente a categoria da aba ativa
+  var sel=document.getElementById('adm-nivel');
+  if(sel && _bibNv) sel.value=_bibNv;
+  m.style.display='flex';
 }
 
 // ===== VISUALIZADOR PDF — iframe nativo (sem CORS, sem PDF.js) =====
