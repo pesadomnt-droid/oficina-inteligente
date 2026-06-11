@@ -252,6 +252,29 @@ select{color:var(--tx);background:var(--bg)}
 select option{background:var(--card-bg);color:var(--tx)}
 input{color:var(--tx)}
 .sis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+.sis-card{background:var(--card-bg);border-radius:var(--radius);padding:12px 8px;box-shadow:var(--shadow);cursor:pointer;border:2px solid var(--border);text-align:center;transition:.2s}
+.sis-card:hover,.sis-card.ativo{border-color:var(--prim);background:rgba(245,158,11,.08)}
+.sis-card .sis-icon{width:28px;height:28px;margin:0 auto 6px;color:var(--prim)}
+.sis-card span{font-size:11px;font-weight:700;color:var(--tx);display:block}
+.sis-card small{font-size:10px;color:var(--tx2)}
+.pane-item{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden;border:1px solid var(--border)}
+.pane-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;gap:8px}
+.pane-hdr h3{margin:0;font-size:13px;color:var(--tx)}
+.pane-body{padding:0 14px 14px;border-top:1px solid var(--border)}
+.sev-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;color:#fff;white-space:nowrap}
+.spec-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)}
+.spec-k{color:var(--tx2)}.spec-v{color:var(--tx);font-weight:600;text-align:right;max-width:60%}
+.test-item{font-size:12px;padding:5px 0;border-bottom:1px dotted var(--border);display:flex;gap:8px;align-items:flex-start}
+.test-n{background:var(--prim);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.sol-item{font-size:12px;padding:4px 0;color:var(--ok)}
+.sub-title{font-size:11px;font-weight:700;color:var(--tx2);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.5px}
+.pane-desc{font-size:12px;color:var(--tx2);margin:10px 0;line-height:1.5}
+.specs-wrap,.testes-wrap,.sols-wrap{margin-bottom:10px}
+.prev-sec{background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:10px}
+.prev-sec h4{margin:0 0 8px;font-size:13px;color:var(--tx)}
+.prev-item{font-size:12px;padding:4px 0;border-bottom:1px dotted var(--border);display:flex;justify-content:space-between;gap:8px}
+.prev-item strong{color:var(--tx)}
+.prev-item span{color:var(--tx2);text-align:right;max-width:60%}
 .sis-btn{background:var(--card-bg);border:2px solid var(--border);border-radius:var(--radius);padding:12px 8px;cursor:pointer;text-align:center;color:var(--tx2);transition:.2s;box-shadow:var(--shadow)}
 .sis-btn .ic{display:flex;align-items:center;justify-content:center;margin-bottom:4px}
 .sis-btn .ic svg{width:26px;height:26px;stroke:var(--tx2)}
@@ -1516,6 +1539,20 @@ function admUpload(input){
   var prog=document.getElementById('prog-bar');
   var fill=document.getElementById('prog-fill');
   var nomeDoc=file.name.replace(/\.pdf$/i,'').replace(/_/g,' ');
+
+  // Verificar tamanho antes de enviar (limite Cloudinary free = 10MB)
+  var MAX_MB = 10;
+  var fileMB = file.size / 1024 / 1024;
+  if(fileMB > MAX_MB){
+    msg.style.color='#f44336';
+    msg.innerHTML = '❌ Arquivo muito grande: <strong>'+fileMB.toFixed(1)+'MB</strong> (limite: '+MAX_MB+'MB)<br>'+
+      '<small>Comprima o PDF antes de subir: '+
+      '<a href="https://ilovepdf.com/pt/comprimir_pdf" target="_blank" style="color:#2196F3">ilovepdf.com</a> ou '+
+      '<a href="https://smallpdf.com/pt/comprimir-pdf" target="_blank" style="color:#2196F3">smallpdf.com</a></small>';
+    input.value='';
+    return;
+  }
+
   msg.textContent='Enviando para nuvem...';msg.style.color='#aaa';
   prog.style.display='block';fill.style.width='20%';
 
@@ -1644,6 +1681,172 @@ function deletarDoc(btn){
   if(deletados.indexOf(id) === -1) deletados.push(id);
   localStorage.setItem('oi_deleted', JSON.stringify(deletados));
   renderCursos();
+}
+
+
+// ============================================================
+// DIAGNÓSTICO — funções principais restauradas
+// ============================================================
+
+function selecionarViatura(v){
+  viatura = v;
+  sistemaAtivo = null;
+  navTo('s-diag','nav-diag','Diagnóstico: '+v.nome);
+  var tv = document.getElementById('t-via');
+  if(tv) tv.textContent = 'Diagnóstico: '+v.nome;
+  renderSistemas();
+  var pl = document.getElementById('panes-lista');
+  if(pl) pl.innerHTML = '<div class="empty">Selecione um sistema acima para ver as falhas.</div>';
+}
+
+function renderSistemas(){
+  var g = document.getElementById('sis-grid');
+  if(!g || !viatura) return;
+  g.innerHTML = '';
+  SISTEMAS.forEach(function(s){
+    var panes = getPanesViatura(s.id);
+    if(!panes.length) return;
+    var card = document.createElement('div');
+    card.className = 'sis-card' + (sistemaAtivo === s.id ? ' ativo' : '');
+    card.innerHTML =
+      '<div class="sis-icon">'+s.icon+'</div>'+
+      '<span>'+s.nome+'</span>'+
+      '<small>'+panes.length+' falha'+(panes.length>1?'s':'')+'</small>';
+    card.onclick = function(){
+      sistemaAtivo = s.id;
+      document.querySelectorAll('.sis-card').forEach(function(c){c.classList.remove('ativo');});
+      card.classList.add('ativo');
+      renderPanes();
+    };
+    g.appendChild(card);
+  });
+}
+
+function getPanesViatura(sistema){
+  var panes = PANES[sistema] || [];
+  if(!viatura) return panes;
+  var vid = viatura.id;
+  // Mapa de prefixos por viatura — baseado nos IDs reais do banco de dados
+  var prefixos = {
+    am21:    function(id){ return /^[emcaft]\d/.test(id); },
+    am23:    function(id){ return /^am23/.test(id) || /^[emcaft]\d/.test(id); },
+    am20:    function(id){ return /^am20/.test(id); },
+    am31:    function(id){ return /^am31/.test(id); },
+    atego:   function(id){ return /^ate/.test(id); },
+    hilux:   function(id){ return /^h[emcaft]/.test(id); },
+    hilux25: function(id){ return /^h[emcaft]/.test(id); },
+    hilux30: function(id){ return /^h[emcaft]/.test(id); },
+    lr:      function(id){ return /^lr[emcaft]?/.test(id); },
+    worker:  function(id){ return /^w[emcaft]/.test(id); }
+  };
+  var filtro = prefixos[vid];
+  if(!filtro) return panes;
+  return panes.filter(function(p){ return filtro(p.id); });
+}
+
+function renderPanes(query){
+  var lista = document.getElementById('panes-lista');
+  if(!lista) return;
+  var panes = sistemaAtivo ? getPanesViatura(sistemaAtivo) : [];
+
+  if(query && query.length > 1){
+    var q = query.toLowerCase();
+    var todos = [];
+    SISTEMAS.forEach(function(s){ todos = todos.concat(getPanesViatura(s.id)); });
+    panes = todos.filter(function(p){
+      return (p.nome+' '+(p.desc||'')+(p.testes||[]).join(' ')+(p.solucoes||[]).join(' ')).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  if(!panes.length){
+    lista.innerHTML = '<div class="empty">Nenhuma falha encontrada.</div>';
+    return;
+  }
+
+  lista.innerHTML = panes.map(function(p){
+    var sevCor = p.sev==='c'?'var(--err)':p.sev==='a'?'#ff9800':p.sev==='m'?'#2196F3':'var(--ok)';
+    var sevTxt = p.sev==='c'?'CRÍTICA':p.sev==='a'?'ALTA':p.sev==='m'?'MÉDIA':'BAIXA';
+    var specs = p.specs ? Object.keys(p.specs).map(function(k){
+      return '<div class="spec-row"><span class="spec-k">'+k+'</span><span class="spec-v">'+p.specs[k]+'</span></div>';
+    }).join('') : '';
+    var testes = p.testes ? p.testes.map(function(t,i){
+      return '<div class="test-item"><span class="test-n">'+(i+1)+'</span>'+t+'</div>';
+    }).join('') : '';
+    var sols = p.solucoes ? p.solucoes.map(function(s){
+      return '<div class="sol-item">✓ '+s+'</div>';
+    }).join('') : '';
+    return '<div class="pane-item" id="pi-'+p.id+'">'+
+      '<div class="pane-hdr" onclick="togglePaneEl(this)" data-pid="'+p.id+'">'+
+        '<div style="flex:1"><h3>'+p.nome+'</h3>'+
+        (p.loc?'<small style="color:var(--tx2)">📍 '+p.loc+'</small>':'')+'</div>'+
+        '<span class="sev-badge" style="background:'+sevCor+'">'+sevTxt+'</span>'+
+      '</div>'+
+      '<div class="pane-body" id="pb-'+p.id+'" style="display:none">'+
+        (p.desc?'<p class="pane-desc">'+p.desc+'</p>':'')+
+        (specs?'<div class="specs-wrap">'+specs+'</div>':'')+
+        (testes?'<div class="testes-wrap"><p class="sub-title">🔍 Testes:</p>'+testes+'</div>':'')+
+        (sols?'<div class="sols-wrap"><p class="sub-title">✅ Soluções:</p>'+sols+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function togglePane(id){
+  var body = document.getElementById('pb-'+id);
+  if(!body) return;
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+function togglePaneEl(el){
+  var id = el.getAttribute('data-pid');
+  togglePane(id);
+}
+
+function renderPreventiva(){
+  var el = document.getElementById('prev-conteudo');
+  var titulo = document.getElementById('prev-titulo');
+  if(!el || !viatura) return;
+  var prev = PREVENTIVA[viatura.id];
+  if(!prev){ el.innerHTML='<div class="empty">Dados preventivos não disponíveis para esta viatura.</div>'; return; }
+  if(titulo) titulo.textContent = '🔧 Preventiva — '+prev.nome;
+  var html = '';
+  if(prev.oleo){
+    html += '<div class="prev-sec"><h4>🛢 Óleo do Motor</h4>'+
+      '<p><strong>Tipo:</strong> '+prev.oleo.tipo+'</p>'+
+      '<p><strong>Capacidade:</strong> '+prev.oleo.capacidade+'</p>'+
+      '<p><strong>Troca:</strong> '+prev.oleo.troca+'</p>'+
+      (prev.oleo.severo?'<p><strong>Uso severo:</strong> '+prev.oleo.severo+'</p>':'')+
+      '</div>';
+  }
+  if(prev.filtros && prev.filtros.length){
+    html += '<div class="prev-sec"><h4>🔩 Filtros e Fluidos</h4>'+
+      prev.filtros.map(function(f){ return '<div class="prev-item"><strong>'+f.nome+'</strong><span>'+f.intervalo+'</span></div>'; }).join('')+
+      '</div>';
+  }
+  if(prev.freios){
+    html += '<div class="prev-sec"><h4>🛑 Freios</h4>'+
+      '<p><strong>Fluido:</strong> '+prev.freios.fluido+'</p>'+
+      '<p><strong>Troca fluido:</strong> '+prev.freios.troca+'</p>'+
+      (prev.freios.obs?'<p>'+prev.freios.obs+'</p>':'')+
+      '</div>';
+  }
+  if(prev.transmissao){
+    html += '<div class="prev-sec"><h4>⚙️ Transmissão</h4>'+
+      (prev.transmissao.cambio?'<p>'+prev.transmissao.cambio+'</p>':'')+
+      (prev.transmissao.diferenciais?'<p>'+prev.transmissao.diferenciais+'</p>':'')+
+      (prev.transmissao.obs?'<p>'+prev.transmissao.obs+'</p>':'')+
+      '</div>';
+  }
+  if(prev.combustivel){
+    html += '<div class="prev-sec"><h4>⛽ Combustível</h4>'+
+      (prev.combustivel.obs?'<p>'+prev.combustivel.obs+'</p>':'')+
+      '</div>';
+  }
+  if(prev.falhas && prev.falhas.length){
+    html += '<div class="prev-sec"><h4>⚠️ Falhas Comuns</h4>'+
+      prev.falhas.map(function(f){ return '<div class="prev-item">• '+f+'</div>'; }).join('')+
+      '</div>';
+  }
+  el.innerHTML = html || '<div class="empty">Sem dados preventivos disponíveis.</div>';
 }
 
 
@@ -1912,6 +2115,15 @@ window.abrirApp = function(){
   if(fab) fab.style.display = 'flex';
   renderMontadoras();
   atualizarBadges();
+  // Wire up search input
+  var buscaEl = document.getElementById('busca');
+  if(buscaEl){
+    buscaEl.addEventListener('input', function(){
+      var q = this.value.trim();
+      if(q.length > 1) renderPanes(q);
+      else if(sistemaAtivo) renderPanes();
+    });
+  }
   if(_origAbrirApp) _origAbrirApp();
 };
 
