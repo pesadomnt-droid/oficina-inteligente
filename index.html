@@ -703,6 +703,21 @@ var PREVENTIVA={
     transmissao:{cambio:'EATON FS 2305 C - 5 marchas + Ré. SAE 80W90 GL-4 - 3.5L. Verificar nível pelo bujão lateral.',diferenciais:'DANA 44-3 dianteiro (4.09:1) + DANA M286 traseiro (4.10:1) com Power Lock. SAE 90 GL-5. Verificar nível mensalmente.',obs:'CAIXA DE TRANSFERÊNCIA: manual dupla velocidade - relação (2:1) reduzida / (1:1) direta. Verificar óleo 1.9L. CARDAN: verificar cruzetas e folga radial. Lubrificar pontos com engaxetadeira conforme manual. Power Lock traseiro: verificar atuação correta.'},
     combustivel:{obs:'Tanque único 95L. Drenar água do filtro de combustível DIARIAMENTE antes da 1ª partida em campo. Injeção eletrônica Cummins ISF 2.8 - não fazer reparos sem scanner. Verificar pressão de combustível. Turbo: aguardar 3-5 min em ralenti antes de desligar quando quente.'},
     falhas:['Sistema 12V com Elevador de Tensão 24V - não confundir componentes','Elevador de tensão 24V com defeito afeta tomadas e acessórios militares','Filtro de combustível saturado - motor engasga sob carga','Ar no sistema de freio hidráulico - pedal esponjoso','Diferencial traseiro Power Lock não engata - verificar atuador','Caixa de transferência em neutro - verificar seletor','Cruzeta do cardan com folga - vibração acima de 60 km/h','Injeção eletrônica Cummins - verificar códigos com scanner antes de substituir peças','Embreagem hidráulica - verificar nível DOT no reservatório','Superaquecimento - verificar nível líquido refrigerante e termostato']},
+  lr:{nome:'Land Rover Defender — Td5 / 300 Tdi',
+    oleo:{tipo:'SAE 15W40 API CF-4 ou 5W-30 sintético (Td5 — conforme manual oficial)',capacidade:'Td5: ~7,5L com filtro / 300 Tdi: ~8,5L com filtro',troca:'Td5: 10.000 km ou 12 meses / 300 Tdi: 8.000 km',severo:'5.000 km em uso off-road intenso'},
+    filtros:[
+      {nome:'Filtro de óleo motor',intervalo:'Cada troca de óleo — verificar O-ring do adaptador'},
+      {nome:'Filtro de combustível Td5',intervalo:'Drenar água semanalmente / Substituir 20.000 km — filtro com purga de água'},
+      {nome:'Filtro de ar',intervalo:'Inspecionar a cada 5.000 km em terreno com pó — substituir por saturação'},
+      {nome:'Fluido de travões DOT 4',intervalo:'Verificar nível mensalmente — trocar a cada 2 anos'},
+      {nome:'Fluido caixa de transferência LT230',intervalo:'SAE 90 EP — verificar nível a cada 20.000 km'},
+      {nome:'Fluido diferencial dianteiro / traseiro',intervalo:'SAE 90 EP com aditivo LSD se aplicável — verificar 20.000 km'},
+      {nome:'Líquido de refrigeração',intervalo:'Anticongelante 50% — verificar nível semanalmente / trocar 2 anos'}
+    ],
+    freios:{fluido:'DOT 4',troca:'A cada 2 anos ou quando cor escura',obs:'Dianteiro: disco. Traseiro: tambor. ABS (Td5): modulador D124 integrado. Sangrar circuito se pedal esponjoso. Verificar S212 (sensor nível fluido).'},
+    transmissao:{cambio:'SAE 75W90 GL-4 — verificar nível pelo bujão lateral',diferenciais:'SAE 90 EP — dianteiro e traseiro — verificar mensalmente',obs:'Caixa de transferência LT230: SAE 90 EP. Tracção 4x4 permanente. Selector Hi/Lo mecânico. Bloqueio diferencial central eléctrico (D150). Lubrificar pontos de articulação com engaxetadeira.'},
+    combustivel:{obs:'Td5: bomba eléctrica M151 no depósito. Drenar filtro de combustível semanalmente (purga de água) — especialmente em campo. Interruptor de inércia S206 corta bomba em impacto — verificar e resetar se motor não parte após embate. Depósito: ~90-110L conforme versão.'},
+    falhas:['Interruptor de inércia S206 activa após impacto — motor não parte — verificar e resetar','Imobilizador D139 com chave transponder danificada — não arranca','Sensor MAF T115 sujo ou com defeito — fumaça preta e falta de potência','Válvula EGR entupida por carbonização — causa comum fumaça preta','Vela de incandescência T171 fundida — arranque difícil no frio','Sensor velocidade de roda — causa mais comum de luz ABS acesa','Relé principal R100 com defeito — electrónica do veículo não alimentada','Fusível 37 (15A) queimado — bomba de combustível M151 inoperante']},
   am23:{nome:'Marrua AM23',oleo:{tipo:'SAE 15W40 API CI-4 ou superior',capacidade:'~8 litros com filtro',troca:'10.000 km ou 6 meses',severo:'5.000 km'},
     filtros:[{nome:'Filtro de Oleo',intervalo:'Toda troca de oleo'},{nome:'Filtro Diesel',intervalo:'Trocar 10.000 km'},{nome:'Filtro de Ar',intervalo:'Conforme saturacao'}],
     freios:{fluido:'Verificar mensalmente',troca:'A cada 2 anos'},
@@ -1285,6 +1300,137 @@ Object.keys(PANES_HILUX).forEach(function(sist){
 
 ;
 
+
+
+// ===== PANES LAND ROVER DEFENDER — Diagramas Eléctricos LRL 0452 / Td5 & 300 Tdi =====
+var PANES_LR = {
+  eletrica:[
+    {id:'lre1',nome:'ECM Td5 (D131) com falha — Gestão do motor',sev:'c',
+     loc:'ECM D131 — Módulo de controlo electrónico / Ficha diagnóstico V100 (OBD)',
+     desc:'O ECM D131 é o cérebro do motor Td5. Controla injecção (5 injectores T172-T176), EGR (D153/D164), velas de incandescência via D140, bomba de combustível via R103, e comunica com ABS (D125) e imobilizador (D139). Alimentação: Fusível 5 (30A) + Link 5 (60A) em P140. Massa em K109.',
+     specs:{'ECM':'D131 — Módulo de controlo electrónico Td5','Alimentação principal':'Link 5 (60A) — Caixa P140','Fusível ECM':'Fusível 5 (30A) + Fusível 37 (15A)','Ficha diagnóstico':'V100 (OBD) / V102 (3 vias)','Comunica com':'ABS (D125), Imobilizador (D139), EGR (D153)','Controla':'5 injectores T172-T176, bomba M151 via R103, velas via D140'},
+     testes:['Ligar scanner OBD na ficha V100 e ler códigos de falha antes de qualquer diagnose','Verificar alimentação no ECM: Link 5 (60A) e Fusível 5 (30A) em P140 — caixa por baixo do banco','Verificar massa K109 — ficha de massa principal do habitáculo','Verificar Fusível 37 (15A) — circuito do relé da bomba de combustível','Com motor falhando após arranque quente: verificar sensor temperatura T121','Verificar comunicação ECM-ABS: ambos devem estar no bus de diagnose'],
+     solucoes:['Ler e apagar códigos com scanner OBD','Verificar e restaurar fusíveis em P140 e P101','Limpar e apertar fichas do ECM D131','Verificar massa K109','Substituir ECM apenas após confirmar todos os outros componentes'],
+     rel:['Imobilizador D139','ECU ABS D125','ECU EGR D153','Bomba combustível M151','Velas D140']},
+
+    {id:'lre2',nome:'Imobilizador motor (D139) — Não parte ou parte e desliga',sev:'c',
+     loc:'ECU D139 — Imobilização do motor / Ficha V100 / Transponder chave',
+     desc:'O imobilizador D139 comunica com o ECM D131 e com o relé de arranque R102. Alimentado pela caixa P140 (Fusível 7). Quando activo, corta a alimentação do motor de arranque M101 e do solenoide de corte de combustível N101 (300 Tdi). O imobilizador usa transponder na chave — defeito na bobina de leitura ou no ECU D139 impede partida.',
+     specs:{'ECU Imobilizador':'D139','Alimentação':'Caixa P140 — Fusível 7','Relé arranque':'R102 controlado pelo D139','Motor arranque':'M101 — bloqueado pelo imobilizador','300 Tdi':'Solenoide corte combustível N101 também controlado','Caixas fusíveis':'P140 (por baixo do banco) + P101 (habitáculo)'},
+     testes:['Verificar se luz de imobilizador no painel pisca continuamente (falha activa)','Verificar Fusível 7 na caixa P140','Testar com chave sobresselente — transponder danificado é causa comum','Verificar tensão no Relé R102: deve ter 12V no terminal 30 com chave em posição II','Verificar continuidade da bobina de leitura do transponder','Scanner: código de imobilizador no D139 — precisa reset com testador Land Rover'],
+     solucoes:['Substituir chave com transponder','Reprogramar imobilizador com testador Land Rover/T4','Verificar e substituir Fusível 7','Substituir bobina de leitura','Substituir ECU D139'],
+     rel:['ECM D131','Relé arranque R102','Motor arranque M101','Ficha diagnóstico V100']},
+
+    {id:'lre3',nome:'Alternador (M100) com defeito — Bateria não carrega',sev:'a',
+     loc:'M100 — Alternador/dínamo / Caixa de fusíveis P140 / Ficha de massa K109',
+     desc:'Sistema 12V — alternador M100 deve gerar 13,8-14,5V. Alimenta toda a electrónica do veículo e carrega a bateria P100. Fusíveis de protecção em P140 e P101. Massa via K109. O ECM D131 monitoriza o sinal do alternador para diagnose.',
+     specs:{'Sistema':'12V','Tensão de carga':'13,8V a 14,5V','Bateria P100':'12V — geralmente 65-70Ah','Caixas fusíveis':'P140 (por baixo do banco) + P101 (habitáculo)','Ficha massa':'K109 — ficha de massa principal','Correia':'Verificar tensão e desgaste'},
+     testes:['Medir tensão na bateria com motor ligado: deve ser 13,8-14,5V','Abaixo de 13V: alternador não carrega — verificar correia e ficha do alternador','Verificar fusíveis principais em P140: Link 1 (100A) e Link 5 (60A)','Verificar massa K109 por oxidação e aperto','Com scanner: verificar se ECM detecta falha no circuito de carga','Testar díodos do alternador: modo AC no multímetro — deve ser <0,5V AC'],
+     solucoes:['Substituir correia do alternador','Limpar ficha do alternador e massa K109','Substituir alternador M100','Verificar e substituir Link 1 ou Link 5 em P140 se fundidos'],
+     rel:['Bateria P100','Caixa P140','ECM D131','Ficha massa K109']},
+
+    {id:'lre4',nome:'Motor de arranque (M101) — Não arranca ou arranque fraco',sev:'c',
+     loc:'M101 — Motor de arranque / Relé R102 / Imobilizador D139 / Bateria P100',
+     desc:'O motor de arranque M101 é controlado pelo relé R102. O relé R102 é comandado pelo ECU imobilizador D139 — se o imobilizador não reconhecer a chave, o relé não fecha e M101 não actua. Também alimentado directamente pela bateria P100 via fusível 60A em P140.',
+     specs:{'Motor arranque':'M101','Relé arranque':'R102 — comandado pelo imobilizador D139','Alimentação directa':'Bateria P100 — 12V via fusível 60A (P140)','Controlo':'D139 fecha o relé R102 após validar transponder','Sistema':'12V'},
+     testes:['Clic mas não arranca: bateria fraca ou motor de arranque com defeito','Sem clic: verificar relé R102 e imobilizador D139','Verificar tensão na bateria P100: mínimo 12,4V em repouso','Verificar o fusível de 60A no P140 para o motor de arranque','Com chave em arranque: medir tensão no terminal do motor de arranque — deve ter 12V','Verificar massa do motor de arranque ao bloco'],
+     solucoes:['Carregar ou substituir bateria P100','Substituir relé R102','Verificar imobilizador D139','Substituir motor de arranque M101','Limpar e apertar massa do motor de arranque'],
+     rel:['Bateria P100','Relé R102','Imobilizador D139','Caixa P140']},
+
+    {id:'lre5',nome:'Velas de incandescência — Dificuldade de arranque a frio',sev:'a',
+     loc:'Velas T171 (4 unidades) / ECU D140 / Relé R114 / Caixa P140',
+     desc:'O Defender Td5 usa 4 velas de incandescência T171 controladas pelo ECU D140 e pelo relé R114. O ECM D131 comanda o D140 conforme temperatura do motor T121. Vela defeituosa ou relé R114 aberto causa arranque difícil ou impossível no frio. O 300 Tdi usa sistema semelhante.',
+     specs:{'Velas':'4x T171 — tipo incandescência','ECU Velas':'D140 — controla tempo de pré-aquecimento','Relé velas':'R114 — Relé-Vela de incandescência','Resistência por vela':'0,6 a 0,8 Ω (vela ok) / OL = vela aberta','Temperatura activação':'Abaixo de ~10°C — maior tempo de pré-aquecimento','Alimentação':'Caixa P140 — Link 5 (60A)'},
+     testes:['Luz de pré-aquecimento no painel deve acender e apagar antes de arrancar','Medir resistência de cada vela: 0,6-0,8Ω = ok / OL (aberto) = vela fundida','Verificar alimentação do relé R114: deve ter 12V no terminal 30','Verificar ECU D140: deve receber sinal do ECM D131 para activar','Com scanner: verificar se ECM detecta falha nas velas','Medir tensão no relé R114 com chave em pré-aquecimento: deve ter 12V saída'],
+     solucoes:['Substituir vela(s) com resistência OL','Substituir relé R114','Verificar e substituir ECU D140','Verificar Link 5 em P140','Limpar fichas das velas — oxidação frequente'],
+     rel:['ECM D131','Relé R114','ECU D140','Sensor temperatura T121','Caixa P140']},
+
+    {id:'lre6',nome:'Sistema ABS (D125/D124) com avaria',sev:'a',
+     loc:'ECU D125 / Modulador D124 / Bomba retorno M152 / Relé R173',
+     desc:'O ABS usa o ECU D125 e o modulador hidráulico D124 com bomba de retorno M152 controlada pelo relé R173. Os sensores de velocidade das rodas enviam sinais ao D125. Falha num sensor de roda é a causa mais comum da luz ABS acender. O ECM D131 também comunica com D125.',
+     specs:{'ECU ABS':'D125','Modulador':'D124 — modulador ABS hidráulico','Bomba retorno':'M152 — Bomba-Retorno-ABS','Relé bomba':'R173 — Relé-ABS-Bomba de retorno','Sensores roda':'4 sensores indutivos (um por roda)','Alimentação':'Caixa P101 (habitáculo)','Ficha diagnóstico':'V100 — OBD'},
+     testes:['Scanner OBD: ler código ABS — indica qual sensor de roda falhou','Medir resistência dos sensores de roda: 1000-2500Ω típico','Inspecionar anel dentado dos sensores: óxido ou dentes partidos causam falha','Verificar fiação dos sensores por cortes ou oxidação','Verificar alimentação do D125 na caixa P101','Com motor ligado: luz ABS que não apaga após 3 segundos = ECU ou sensor com falha'],
+     solucoes:['Substituir sensor de roda com falha (mais comum)','Limpar anel dentado do sensor','Reparar fiação do sensor','Substituir modulador D124 se não há pressão no pedal','Substituir ECU D125','Verificar fusíveis em P101'],
+     rel:['ECM D131','Modulador D124','Bomba M152','Relé R173','Ficha V100']}
+  ],
+  mecanica:[
+    {id:'lrm1',nome:'Sistema de travões com deficiências',sev:'c',
+     loc:'Sistema hidráulico / Bomba de travões / Interruptor nível S212 / ABS D124',
+     desc:'O Defender usa travões hidráulicos com servo assistência e ABS (Td5). O interruptor de nível de fluido S212 envia sinal de alerta ao painel. Travões traseiros tambor, dianteiros disco. O modulador ABS D124 integra-se no circuito hidráulico.',
+     specs:{'Tipo dianteiro':'Disco com pinça','Tipo traseiro':'Tambor','Servo':'Servofreno hidráulico','ABS':'Modulador D124 integrado (Td5)','Fluido':'DOT 4','Sensor nível':'S212 — Interruptor-Nível do fluido dos travões','Pedal travão':'S215 — Interruptor-Pedal do travão'},
+     testes:['Verificar nível de fluido DOT 4 no reservatório','Verificar interruptor S212: luz de alerta no painel deve acender com nível baixo','Pedal esponjoso: ar no circuito hidráulico — sangrar','Verificar pastilhas dianteiras e lonas traseiras por desgaste','Verificar tubagens flexíveis por fissuras (especialmente dianteiras)','Com ABS: verificar modulador D124 se pedal pulsa demasiado'],
+     solucoes:['Completar fluido DOT 4','Sangrar circuito de travões','Substituir pastilhas/lonas','Substituir tubagens flexíveis degradadas','Verificar/substituir modulador ABS D124'],
+     rel:['ABS D124/D125','Interruptor S212','Interruptor S215']},
+
+    {id:'lrm2',nome:'Diferencial bloqueado ou sem bloqueio (D150)',sev:'m',
+     loc:'Unidade de bloqueio do diferencial D150 / Interruptor no painel',
+     desc:'O Land Rover Defender tem bloqueio do diferencial central eléctrico, controlado pela unidade D150. Alimentado via ficha de massa K109. Falha pode ser eléctrica (sensor, fiação, D150) ou mecânica (actuador).',
+     specs:{'Unidade bloqueio':'D150 — Unidade de bloqueio do diferencial','Alimentação':'Via caixa P101 habitáculo','Ficha massa':'K109','Indicação':'Luz no painel ao engatar bloqueio'},
+     testes:['Verificar alimentação na unidade D150','Verificar ficha de massa K109','Verificar continuidade do circuito do interruptor de bloqueio','Com scanner: verificar se há código de falha no sistema','Testar actuador mecânico do diferencial por resistência'],
+     solucoes:['Verificar e substituir fusível do circuito D150','Limpar fichas e massa K109','Substituir interruptor no painel','Substituir actuador mecânico','Substituir unidade D150'],
+     rel:['Caixa P101','Ficha massa K109']}
+  ],
+  combustivel:[
+    {id:'lrc1',nome:'Bomba de combustível (M151) — Motor não parte ou perde potência',sev:'c',
+     loc:'M151 — Bomba de combustível / S206 — Interruptor de inércia / R103 — Relé bomba / ECM D131',
+     desc:'A bomba eléctrica M151 é controlada pelo ECM D131 via relé R103. O INTERRUPTOR DE INÉRCIA S206 corta a bomba em caso de impacto — causa frequente de motor que não parte após acidente ou embate. S206 fica no habitáculo e tem botão de reset. O Fusível 37 (15A) protege o circuito.',
+     specs:{'Bomba combustível':'M151 — bomba eléctrica no depósito','Relé bomba':'R103 — Relé-Bomba de combustível controlado pelo ECM','Interruptor inércia':'S206 — corta bomba em caso de impacto — TEM RESET','Fusível':'Fusível 37 — 15A — circuito bomba','ECM':'D131 — activa a bomba via R103','Indicador nível':'D179 — Unidade emissora do nível'},
+     testes:['PRIMEIRO: verificar S206 (interruptor de inércia) — botão de reset visível no habitáculo','Verificar Fusível 37 (15A) no suporte P110','Verificar relé R103 — trocar por relé do mesmo tipo para teste rápido','Com chave em posição II: deve ouvir bomba M151 durante 2-3 segundos','Medir pressão de combustível na régua dos injectores: Td5 = 3-4 bar','Verificar filtro de combustível por entupimento'],
+     solucoes:['RESETAR interruptor de inércia S206 (causa mais comum após impacto)','Substituir Fusível 37','Substituir relé R103','Substituir filtro de combustível','Substituir bomba M151','Verificar ECM D131 se relé e fusível estão ok'],
+     rel:['ECM D131','Relé R100 principal','Relé R103','S206 inércia','Caixa P140']},
+
+    {id:'lrc2',nome:'Sistema EGR (D153/D164) — Fumaça preta / Falta de potência',sev:'m',
+     loc:'ECU EGR D153 / Modulador D164 / Sensor temperatura EGR T186 / Borboleta EGR Y160',
+     desc:'O sistema EGR do Td5 usa o ECU D153 para controlar o modulador pneumático D164 e a borboleta de entrada Y160. O sensor T186 mede a temperatura dos gases recirculados. EGR entupida ou com fugas causa fumaça preta, consumo excessivo e falta de potência.',
+     specs:{'ECU EGR':'D153','Modulador EGR':'D164 — modulador pneumático','Sensor temperatura EGR':'T186','Borboleta EGR entrada':'Y160','Alimentação':'Caixa P101 — Fusível 12','ECM':'D131 — comanda o D153 via sinal'},
+     testes:['Scanner OBD: ler código EGR no ECM D131 e no ECU D153','Verificar mangueiras de vácuo do modulador D164 por fissuras','Inspecionar válvula EGR por depósitos de carbonização — causa mais comum','Medir resistência sensor T186: NTC — maior resistência a frio','Verificar borboleta Y160 por calcinação','Fusível 12 (10A) na caixa P101'],
+     solucoes:['Limpar ou substituir válvula EGR entupida','Limpar borboleta Y160','Substituir sensor T186','Substituir modulador D164','Verificar e corrigir mangueiras de vácuo','Substituir ECU D153'],
+     rel:['ECM D131','Modulador D164','Sensor T186','Borboleta Y160','Ficha V100']},
+
+    {id:'lrc3',nome:'Sensores do motor Td5 — Falhas de diagnose',sev:'a',
+     loc:'Vários sensores: T115 MAF / T116 IAT / T121 Temp. refrigeração / T245 MAP / T102 CKP / T111 TP',
+     desc:'O ECM D131 do Td5 usa múltiplos sensores para controlar a injecção. Falha num sensor activa o modo de emergência (limp mode) com potência reduzida e luz de avaria acesa. SEMPRE usar scanner OBD na ficha V100 para identificar o sensor com falha antes de substituir.',
+     specs:{'T102 CKP':'Sensor posição da cambota — indutivo — resistência 860Ω ±10%','T111 TP':'Sensor posição acelerador — potenciométrico — 0,5V a 4,5V','T115 MAF':'Sensor massa caudal de ar — 5V alimentação — sinal 0,5-4,5V','T116 IAT':'Sensor temperatura ar admissão — NTC','T121 Coolant':'Sensor temperatura líquido refrigeração — NTC','T245 MAP':'Sensor pressão absoluta colector — piezoelétrico 5V','T125':'Sensor temperatura régua injectores — NTC'},
+     testes:['SEMPRE usar scanner OBD (ficha V100) antes de qualquer substituição','T102 CKP: medir resistência nos pinos — 860Ω ±10% (sensor indutivo)','T115 MAF: verificar alimentação 5V e sinal de 0,5V (repouso) a 4,5V (carga)','T121 Coolant: NTC — resistência alta a frio / baixa a quente','T111 TP: verificar tensão variável de 0,5V (repouso) a 4,5V (fundo)','T245 MAP: verificar alimentação 5V — sinal proporcional à pressão do colector','Verificar fichas de todos os sensores por oxidação e pinos dobrados'],
+     solucoes:['Substituir sensor identificado pelo scanner OBD','Limpar e proteger fichas dos sensores','Verificar fiação por cortes e curto-circuitos','Verificar alimentação de 5V do ECM aos sensores activos','Substituir ECM D131 apenas se todos os sensores verificados'],
+     rel:['ECM D131','Ficha diagnóstico V100','Relé principal R100']}
+  ],
+  arrefecimento:[
+    {id:'lra1',nome:'Sobreaquecimento — Sistema de arrefecimento',sev:'c',
+     loc:'Sensor temperatura T121 / Indicador painel J103 / Termóstato / Radiador',
+     desc:'O sensor de temperatura T121 envia sinal ao ECM D131 e ao indicador J103 no painel. O ECM usa esta informação para proteger o motor (modo de emergência se sobreaquecimento). O Defender Td5 não tem ventilador eléctrico de arrefecimento do motor — usa apenas ventilador mecânico com embraiagem viscosa.',
+     specs:{'Sensor temp. refrigeração':'T121 — NTC — montado no bloco','Indicador painel':'J103 — Indicador-Temperatura do líquido de refrigeração','Tipo ventilador':'Mecânico com embraiagem viscosa (não eléctrico no motor)','Líquido refrigeração':'Mistura anticongelante 50% — verificar nível semanalmente em campo','Termóstato':'Abre a ~82°C — substituir se motor demora muito a aquecer ou sobreaquece'},
+     testes:['Verificar nível do líquido de refrigeração a frio','Verificar sensor T121: NTC — alta resistência frio / baixa resistência quente','Verificar termóstato: motor demora muito a aquecer = termóstato aberto permanentemente','Verificar correia da bomba de água','Inspecionar radiador por obstrução ou fuga','Verificar tampa do radiador por pressão (deve manter 1 bar)'],
+     solucoes:['Completar nível de líquido refrigerante','Substituir termóstato','Substituir sensor T121','Substituir bomba de água ou correia','Limpar ou substituir radiador','Verificar juntas da cabeça se consumo de líquido sem fuga visível'],
+     rel:['ECM D131','Indicador J103','Sensor T121']}
+  ],
+  freios:[
+    {id:'lrf1',nome:'Luz de avaria dos travões — Diagnose',sev:'a',
+     loc:'Interruptor nível fluido S212 / Interruptor pedal S215 / ABS D125',
+     desc:'A luz de avaria dos travões pode ser activada pelo interruptor de nível S212 (nível baixo) ou por falha no ABS (D125). O interruptor S215 do pedal é usado pelo ECM D131 e pelo ABS. Verificar sempre qual das luzes acendeu: travão/handbrake OU ABS.',
+     specs:{'Interruptor nível':'S212 — Interruptor-Nível do fluido dos travões','Interruptor pedal':'S215 — Interruptor-Pedal do travão','ECU ABS':'D125 — activa luz ABS separada','Fluido':'DOT 4','Sensor freio mão':'Separado — interruptor mecânico'},
+     testes:['Identificar qual luz acendeu: ABS (separada) ou avaria travão (vermelha)','Luz vermelha: verificar nível fluido DOT 4 com S212','Luz ABS: usar scanner OBD para ler código D125','Verificar freio de mão: interruptor pode estar desajustado','Verificar S215 (pedal): ECM pode registar falha se sinal incorreto'],
+     solucoes:['Completar fluido DOT 4','Resolver falha ABS via scanner','Ajustar interruptor freio de mão','Substituir S212 ou S215 com defeito'],
+     rel:['ABS D124/D125','ECM D131','Fluido DOT 4']}
+  ],
+  transmissao:[
+    {id:'lrt1',nome:'Caixa de transferência / Selector de tracção',sev:'m',
+     loc:'Caixa de transferência / Interruptor Hi-Lo S235 / Painel instrumentos',
+     desc:'O Defender usa caixa de transferência mecânica com selector Hi/Lo. O interruptor S235 de alto/baixo envia sinal ao ECM D131. O bloqueio do diferencial central é eléctrico via D150. A tracção total permanente (LT230) não tem actuadores eléctricos — a selecção é totalmente mecânica.',
+     specs:{'Caixa transferência':'LT230 — tracção 4x4 permanente — selector mecânico Hi/Lo','Interruptor Hi/Lo':'S235 — Interruptor-Transmissão-Alto-Baixo — sinal ao ECM','Bloqueio diferencial':'D150 — eléctrico','Pedal embraiagem':'S258 — sinal ao ECM para controlo de arranque'},
+     testes:['Verificar interruptor S235: sinal ao ECM deve mudar com selector Hi/Lo','Verificar S258 (posição embraiagem): ECM usa este sinal','Verificar nível de óleo da caixa de transferência','Ruídos ao engatar reduzida: verificar sincronizador','Bloqueio diferencial não funciona: verificar D150 e circuito eléctrico'],
+     solucoes:['Verificar e completar óleo da caixa de transferência','Substituir interruptor S235','Verificar unidade D150','Resolver mecanicamente se ruídos na caixa de transferência'],
+     rel:['ECM D131','D150 bloqueio diferencial','S235','S258']}
+  ]
+};
+
+// Mesclar PANES_LR
+Object.keys(PANES_LR).forEach(function(sist){
+  if(PANES[sist]){
+    PANES[sist] = PANES[sist].filter(function(p){ return !/^lr[emcaft]/.test(p.id); });
+    PANES[sist] = PANES[sist].concat(PANES_LR[sist]);
+  }
+});
 
 // ===== PANES MARRUA AM31 — Cummins ISF 2.8 / Ficha Técnica Agrale =====
 var PANES_AM31 = {
