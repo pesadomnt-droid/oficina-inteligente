@@ -687,6 +687,17 @@ var PREVENTIVA={
       'Batidas no diferencial - verificar nivel oleo SAE 90 GL-5',
       'Chicote dianteiro oxidado - cód. 6011.011.027.00.1',
       'Lâmpadas 24V substituidas por 12V - instrumentos com leitura errada']},
+  am23:{nome:'Marrua AM23 - Motor MWM Sprint 4.07',oleo:{tipo:'SAE 15W40 API CI-4 ou CH-4 Diesel',capacidade:'~8 litros com filtro',troca:'10.000 km ou 6 meses',severo:'5.000 km em uso off-road'},
+    filtros:[
+      {nome:'Filtro de Óleo',intervalo:'A cada troca de óleo'},
+      {nome:'Filtro de Combustível',intervalo:'Drenar água diariamente / Trocar 10.000 km'},
+      {nome:'Filtro de Ar',intervalo:'Limpar por sopragem / Substituir por saturação'},
+      {nome:'Fluido de Freio',intervalo:'DOT 3 ou DOT 4 — verificar mensalmente / trocar 2 anos'}
+    ],
+    freios:{fluido:'DOT 3 ou DOT 4',troca:'A cada 2 anos',obs:'Verificar pastilhas, lonas e nível do fluido mensalmente.'},
+    transmissao:{obs:'Verificar nível do óleo do câmbio e diferencial periodicamente.'},
+    combustivel:{obs:'Drenar água do filtro de combustível diariamente em campo.'},
+    falhas:['Filtro de combustível saturado — motor para sob carga','Bateria fraca — verificar alternador e terminais','Superaquecimento — verificar nível líquido e termostato','Embreagem escorregando — verificar regulagem']},
   am31:{nome:'Marrua AM31 - Cummins ISF 2.8',oleo:{tipo:'SAE 15W40 API CI-4 ou superior (motor Cummins ISF 2.8)',capacidade:'5.5 litros com filtro (cárter conforme ficha técnica)',troca:'10.000 km ou 6 meses em uso normal / 5.000 km em uso severo (campo)',severo:'5.000 km em operacoes off-road'},
     filtros:[
       {nome:'Filtro de Óleo Motor',intervalo:'A cada troca de óleo - verificar cárter 5.5L'},
@@ -784,12 +795,6 @@ var PREVENTIVA={
       'Sensor CMP 4+1 dentes: resistencia 950-1250 ohm',
       'UCE Motor no porta-luvas - umidade causa falha',
       'Imobilizador: transponder chave com defeito']},
-  lr:{nome:'Land Rover',oleo:{tipo:'SAE 5W40 ou conforme manual especifico',capacidade:'Conforme modelo',troca:'10.000 km ou 12 meses'},
-    filtros:[{nome:'Filtro de Oleo',intervalo:'Toda troca de oleo'},{nome:'Filtro de Ar',intervalo:'Verificar sempre'}],
-    freios:{obs:'Verificar nivel de fluido mensalmente e pastilhas a cada revisao.'},
-    transmissao:{obs:'Verificar cambio e diferenciais periodicamente.'},
-    combustivel:{obs:'Verificar mangueiras e filtros do sistema de combustivel.'},
-    falhas:['Vazamentos de oleo','Suspensao a ar com defeito','Falhas eletricas']}
 };
 
 var CR_AM21={
@@ -1671,7 +1676,7 @@ function logout(){ /* removido */ }
 function abrirApp(){
   // inicialização base — fluxo controlado pelo override V2
 }
-function abrirAdmin(){/* substituido pelo módulo de segurança */}
+/* abrirAdmin definido mais abaixo como window.abrirAdmin */
 function fecharAdmin(){document.getElementById('modal-adm').style.display='none';}
 
 function admUpload(input){
@@ -1745,7 +1750,8 @@ function admUpload(input){
             });
             if(tot===0&&kwds.length>5) extras.push({p:1,v:vid,n:nomeDoc,t:kwds+' '+nomeDoc});
             // Atualizar tem_texto no doc
-            var idx=_docs.findIndex(function(d){return d.nome===nomeDoc;});
+            var idx=-1;
+            for(var _i=0;_i<_docs.length;_i++){if(_docs[_i].nome===nomeDoc){idx=_i;break;}}
             if(idx>=0){_docs[idx].tem_texto=tot>0;_docs[idx].paginas=pdfDoc.numPages;}
             localStorage.setItem('oi_docs',JSON.stringify(_docs));
             localStorage.setItem('oi_extras',JSON.stringify(extras));
@@ -1764,9 +1770,16 @@ function admUpload(input){
       setTimeout(function(){prog.style.display='none';fill.style.width='0';},4000);
     })
     .catch(function(e){
-      fill.style.width='0';prog.style.display='none';
-      msg.textContent='❌ Erro: '+(e.message||'Tente novamente.');
-      msg.style.color='#f44336';
+      fill.style.width='0'; prog.style.display='none';
+      var erroMsg = e.message || 'Erro desconhecido';
+      var dica = '';
+      if(erroMsg.indexOf('400') >= 0) dica = ' — Verifique o preset Cloudinary (deve ser "unsigned")';
+      else if(erroMsg.indexOf('401') >= 0) dica = ' — Acesso negado. Credenciais inválidas';
+      else if(erroMsg.indexOf('413') >= 0 || erroMsg.indexOf('large') >= 0) dica = ' — Arquivo muito grande. Comprima em ilovepdf.com';
+      else if(erroMsg.indexOf('Failed to fetch') >= 0 || erroMsg.indexOf('NetworkError') >= 0) dica = ' — Sem conexão com internet';
+      else if(erroMsg.indexOf('timeout') >= 0) dica = ' — Tempo esgotado. Tente novamente com boa conexão';
+      msg.innerHTML = '❌ <strong>Erro no upload:</strong> ' + erroMsg + '<br><small style="color:#ff9800">' + (dica || 'Tente novamente ou reduza o tamanho do arquivo') + '</small>';
+      msg.style.color = '#f44336';
     });
   input.value='';
 }
@@ -1782,8 +1795,8 @@ function bibAba(btn){
 }
 
 function bibLockClick(){
-  // 1 clique abre direto — a senha SHA-256 é a proteção real
-  if(!document.body.classList.contains('is-admin')) abrirAdmin();
+  // Chama window.abrirAdmin (função real async) diretamente
+  if(!document.body.classList.contains('is-admin')) window.abrirAdmin();
   else abrirModalAdm();
 }
 
@@ -2170,7 +2183,8 @@ function navPrev(){
 
 function navLib(){
   navTo('s-biblioteca','nav-lib','Biblioteca');
-  renderCursos();
+  // Timeout garante que a seção já está visível antes de renderizar
+  setTimeout(function(){ renderCursos(); }, 50);
 }
 
 function voltarModelos(){
@@ -2310,9 +2324,13 @@ function exportarDocs(){
 
 // Abre modal admin (helper sem aspas problemáticas)
 function abrirModalAdm(){
+  // Se não é admin ainda, pede senha primeiro
+  if(!document.body.classList.contains('is-admin')){
+    window.abrirAdmin();
+    return;
+  }
   var m=document.getElementById('modal-adm');
   if(!m) return;
-  // Pré-seleciona automaticamente a categoria da aba ativa
   var sel=document.getElementById('adm-nivel');
   if(sel && _bibNv) sel.value=_bibNv;
   m.style.display='flex';
@@ -2324,20 +2342,35 @@ function abrirPDFBtn(btn){
 }
 
 function abrirPDF(url, nome){
-  document.getElementById('pdf-titulo').textContent = nome || 'Documento';
+  var titulo = nome || 'Documento';
+  // Normalizar URL Cloudinary — raw → image para acesso público
+  var urlFinal = url.replace('/raw/upload/', '/image/upload/');
+
+  // MOBILE: abre direto em nova aba (iframe não funciona bem no mobile)
+  var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+  if(isMobile){
+    window.open(urlFinal, '_blank');
+    return;
+  }
+
+  // DESKTOP: modal com Google Docs Viewer + fallback automático
+  document.getElementById('pdf-titulo').textContent = titulo;
   var dl = document.getElementById('pdf-dl-link');
-  if(dl) dl.href = url;
-  // Limpa e recarrega o iframe para evitar cache
-  var frame = document.getElementById('pdf-frame');
-  frame.src = '';
-  // Normaliza URL para entrega inline — funciona para raw e image
-  var urlFinal = url
-    .replace('/raw/upload/', '/raw/upload/fl_inline/')
-    .replace('/image/upload/', '/image/upload/fl_attachment:false/');
-  // Atualiza link direto
   if(dl) dl.href = urlFinal;
-  // Google Docs Viewer como proxy (mais compatível cross-browser)
+  var frame = document.getElementById('pdf-frame');
+  if(!frame){ window.open(urlFinal,'_blank'); return; }
+  frame.src = '';
   var gdv = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(urlFinal);
+  frame.onload = function(){};
+  frame.onerror = function(){
+    document.getElementById('pdf-info') && (document.getElementById('pdf-info').textContent = '');
+    var aviso = document.createElement('div');
+    aviso.style.cssText = 'padding:20px;text-align:center;color:var(--tx2)';
+    aviso.innerHTML = '⚠️ Não foi possível carregar o visualizador.<br><br>'+
+      '<a href="'+urlFinal+'" target="_blank" style="background:var(--prim);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700">📥 Abrir PDF em nova aba</a>';
+    var wrap = document.getElementById('pdf-canvas-wrap');
+    if(wrap){ wrap.innerHTML=''; wrap.appendChild(aviso); }
+  };
   setTimeout(function(){ frame.src = gdv; }, 80);
   document.getElementById('modal-pdf').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -2371,7 +2404,7 @@ async function _sha256(msg){
 
 // Hash da senha admin — gerado externamente (não é a senha em texto)
 // Para mudar a senha: gere o SHA-256 da nova senha e substitua este valor
-var _AH = '6b9038152e11b3fbb0ac6647c457f897fa2b8feb08da30ee76ad4080f9963648';
+var _AH = '8939e7790a11549922beae5d050962d1059af3f769ac17273a2fa0411f0e233b'; // manu@20
 
 // Controle de tentativas (sessionStorage — zera ao fechar o navegador)
 function _getAA(){ return parseInt(sessionStorage.getItem('_aa')||'0'); }
@@ -2402,12 +2435,14 @@ window.abrirAdmin = async function(){
     sessionStorage.removeItem('_aa');
     sessionStorage.removeItem('_al');
     document.body.classList.add('is-admin');
-    // Atualizar ícone do cadeado para indicar modo admin
     var lk=document.getElementById('bib-lock');
-    if(lk){lk.textContent='🔓';lk.title='Admin ativo — clique 3x para painel';}
-    renderCursos();
-    var modal = document.getElementById('modal-adm');
-    if(modal) modal.style.display = 'flex';
+    if(lk){lk.textContent='🔓';lk.title='Admin ativo';}
+    // Timeout garante que is-admin já está no body antes de renderizar
+    setTimeout(function(){
+      renderCursos();
+      var modal = document.getElementById('modal-adm');
+      if(modal) modal.style.display = 'flex';
+    }, 100);
   } else {
     // Falha
     tentativas++;
