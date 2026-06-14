@@ -567,48 +567,68 @@ canvas.pdf-pg{box-shadow:0 2px 8px rgba(0,0,0,.3);border-radius:2px;max-width:10
     <h2>🔒 Painel Admin</h2>
     <button onclick="fecharAdmin()" style="background:none;border:none;color:var(--tx2);font-size:20px;cursor:pointer">✕</button>
   </div>
-  <label>Nível do Curso:</label>
-  <select id="adm-nivel">
+  <!-- PASSO 1: instruções GitHub -->
+  <div style="background:rgba(33,150,243,.1);border:1px solid rgba(33,150,243,.3);border-radius:8px;padding:12px;margin-bottom:14px">
+    <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#2196F3">📁 COMO ADICIONAR UM PDF</p>
+    <p style="margin:0;font-size:11px;color:var(--tx2);line-height:1.6">
+      1. Sobe o arquivo PDF no GitHub:<br>
+      &nbsp;&nbsp;&nbsp;<strong>pesadomnt-droid/oficina-inteligente</strong> → pasta <code>pdfs/</code><br>
+      2. Preencha os campos abaixo e clique em <strong>Registrar</strong><br>
+      3. O app gera a URL automaticamente ✓
+    </p>
+  </div>
+
+  <label>Nome do documento:</label>
+  <input id="adm-nome" type="text" placeholder="Ex: Elétrica Básica Veículos Militares" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid var(--brd);background:var(--bg2);color:var(--tx);font-size:13px;margin-bottom:10px">
+
+  <label>Nome do arquivo (exato, com .pdf):</label>
+  <input id="adm-arquivo" type="text" placeholder="Ex: eletrica-basica.pdf" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid var(--brd);background:var(--bg2);color:var(--tx);font-size:13px;margin-bottom:4px">
+  <small id="adm-url-preview" style="color:#2196F3;font-size:10px;display:block;margin-bottom:10px;word-break:break-all"></small>
+
+  <label>Categoria:</label>
+  <select id="adm-nivel" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid var(--brd);background:var(--bg2);color:var(--tx);font-size:13px;margin-bottom:10px">
     <option value="eletrica-basica">⚡ Elétrica Básica</option>
     <option value="mecanica-basica">🔧 Mecânica Básica</option>
     <option value="avancado">🎓 Avançado</option>
     <option value="esquema">📐 Esquema Elétrico</option>
     <option value="manual">📖 Manual de Manutenção</option>
   </select>
+
   <label>Viatura (opcional):</label>
-  <select id="adm-via">
+  <select id="adm-via" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid var(--brd);background:var(--bg2);color:var(--tx);font-size:13px;margin-bottom:10px">
     <option value="geral">Geral / Todas</option>
     <option value="am21">Marruá AM21</option>
     <option value="am20">Marruá AM20</option>
     <option value="am23">Marruá AM23</option>
+    <option value="am31">Marruá AM31</option>
     <option value="atego">Atego</option>
     <option value="hilux">Hilux Ambulância</option>
     <option value="lr">Land Rover</option>
+    <option value="worker">VW Worker</option>
   </select>
-  <label>Categoria:</label>
-  <select id="adm-cat">
-    <option value="curso">Curso / Manual</option>
-    <option value="esquema">Esquema Elétrico</option>
-    <option value="manutencao">Manual de Manutenção</option>
-    <option value="diagnostico">Diagnóstico</option>
-  </select>
-  <label>Palavras-chave (para busca — útil em PDFs com imagem):</label>
-  <textarea id="adm-kwds" rows="2" placeholder="Ex: bateria, alternador, fusível, tensão, corrente, relé..." style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid var(--brd);background:var(--bg2);color:var(--tx);font-size:12px;resize:vertical"></textarea>
-  <div class="adm-upload" onclick="document.getElementById('adm-file').click()">
-    📎 Clique para selecionar PDF
-    <input type="file" id="adm-file" accept=".pdf" style="display:none" onchange="admUpload(this)">
-  </div>
-  <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
-  <div id="adm-msg" style="font-size:12px;color:var(--tx2);min-height:16px"></div>
+
+  <label>Palavras-chave (para busca):</label>
+  <textarea id="adm-kwds" rows="2" placeholder="Ex: bateria, alternador, fusível, tensão, corrente..." style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid var(--brd);background:var(--bg2);color:var(--tx);font-size:12px;resize:vertical;margin-bottom:12px"></textarea>
+
+  <button onclick="admRegistrar()" style="width:100%;background:linear-gradient(135deg,#1b5e20,#4CAF50);color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;margin-bottom:8px">
+    ✅ Registrar PDF na Biblioteca
+  </button>
+  <div id="adm-msg" style="font-size:12px;min-height:16px;text-align:center"></div>
+
   <hr style="border:none;border-top:1px solid var(--brd);margin:14px 0">
   <div style="background:var(--bg2);border-radius:8px;padding:12px">
-    <p style="margin:0 0 8px;font-size:12px;color:var(--tx2);font-weight:600">📁 SINCRONIZAÇÃO ENTRE DISPOSITIVOS</p>
-    <p style="margin:0 0 10px;font-size:11px;color:var(--tx2);line-height:1.5">Após adicionar PDFs, exporte o <code>docs.json</code> e coloque no repositório GitHub junto com o <code>index.html</code>. Qualquer dispositivo verá os PDFs automaticamente.</p>
+    <p style="margin:0 0 8px;font-size:12px;color:var(--tx2);font-weight:600">🔄 SINCRONIZAR ENTRE DISPOSITIVOS</p>
+    <p style="margin:0 0 10px;font-size:11px;color:var(--tx2)">Após registrar PDFs, exporte e suba o docs.json no GitHub.</p>
     <button onclick="exportarDocs()" style="background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;border:none;padding:9px 16px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;width:100%">
-      ⬇️ Exportar docs.json para o GitHub
+      ⬇️ Exportar docs.json
     </button>
     <div id="export-status" style="font-size:11px;color:var(--tx2);margin-top:6px;text-align:center"></div>
   </div>
+
+  <!-- Campos ocultos para compatibilidade -->
+  <input type="hidden" id="adm-cat" value="curso">
+  <input type="file" id="adm-file" accept=".pdf" style="display:none">
+  <div class="prog-bar" id="prog-bar" style="display:none"><div class="prog-fill" id="prog-fill"></div></div>
 </div>
 </div>
 
@@ -2009,6 +2029,84 @@ function renderPreventiva(){
 }
 
 
+// ===== GITHUB PDF — registrar sem upload Cloudinary =====
+var GITHUB_BASE = 'https://pesadomnt-droid.github.io/oficina-inteligente/pdfs/';
+
+// Preview da URL em tempo real
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id === 'adm-arquivo'){
+    var arquivo = e.target.value.trim();
+    var preview = document.getElementById('adm-url-preview');
+    if(preview){
+      preview.textContent = arquivo ? '🔗 ' + GITHUB_BASE + arquivo : '';
+    }
+  }
+});
+
+function admRegistrar(){
+  var nome = (document.getElementById('adm-nome')||{}).value || '';
+  var arquivo = (document.getElementById('adm-arquivo')||{}).value || '';
+  var nivel = (document.getElementById('adm-nivel')||{}).value || 'eletrica-basica';
+  var via = (document.getElementById('adm-via')||{}).value || 'geral';
+  var kwds = (document.getElementById('adm-kwds')||{}).value || '';
+  var msg = document.getElementById('adm-msg');
+
+  // Validações
+  if(!nome.trim()){
+    msg.style.color='#f44336';
+    msg.textContent='❌ Preencha o nome do documento.';
+    return;
+  }
+  if(!arquivo.trim()){
+    msg.style.color='#f44336';
+    msg.textContent='❌ Informe o nome do arquivo (ex: eletrica.pdf).';
+    return;
+  }
+  if(!arquivo.toLowerCase().endsWith('.pdf')){
+    arquivo = arquivo + '.pdf';
+  }
+
+  var url = GITHUB_BASE + arquivo.trim();
+
+  // Salvar no _docs
+  var doc = {
+    id: Date.now().toString(),
+    nome: nome.trim(),
+    viatura_id: via,
+    cat: 'curso',
+    nivel: nivel,
+    palavras_chave: kwds,
+    arquivo_url: url,
+    tamanho: '',
+    paginas: '',
+    tem_texto: false,
+    fonte: 'github'
+  };
+  _docs.push(doc);
+  localStorage.setItem('oi_docs', JSON.stringify(_docs));
+
+  // Indexar palavras-chave para busca IA
+  if(kwds.trim().length > 3){
+    var extras = JSON.parse(localStorage.getItem('oi_extras')||'[]');
+    extras.push({p:1, v:via, n:nome.trim(), t:kwds+' '+nome.trim()});
+    localStorage.setItem('oi_extras', JSON.stringify(extras));
+  }
+
+  // Feedback
+  msg.style.color = '#4CAF50';
+  msg.innerHTML = '✅ <strong>'+nome.trim()+'</strong> registrado!<br>'+
+    '<small style="color:var(--tx2)">Lembre de subir o arquivo em <strong>pdfs/'+arquivo.trim()+'</strong> no GitHub.</small>';
+
+  // Limpar campos
+  if(document.getElementById('adm-nome')) document.getElementById('adm-nome').value='';
+  if(document.getElementById('adm-arquivo')) document.getElementById('adm-arquivo').value='';
+  if(document.getElementById('adm-kwds')) document.getElementById('adm-kwds').value='';
+  if(document.getElementById('adm-url-preview')) document.getElementById('adm-url-preview').textContent='';
+
+  renderCursos();
+}
+
+
 function renderFavs(){
   var g=document.getElementById('fav-list');
   if(!favs.length){g.innerHTML='<div class="empty">Nenhum favorito ainda.</div>';return;}
@@ -2343,24 +2441,27 @@ function abrirPDFBtn(btn){
 
 function abrirPDF(url, nome){
   var titulo = nome || 'Documento';
-  // Normalizar URL Cloudinary — raw → image para acesso público
   var urlFinal = url.replace('/raw/upload/', '/image/upload/');
 
-  // MOBILE: abre direto em nova aba (iframe não funciona bem no mobile)
+  // MOBILE: abre direto em nova aba
   var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   if(isMobile){
     window.open(urlFinal, '_blank');
     return;
   }
 
-  // DESKTOP: modal com Google Docs Viewer + fallback automático
+  // DESKTOP: iframe direto para GitHub Pages / Google Docs para outros
   document.getElementById('pdf-titulo').textContent = titulo;
   var dl = document.getElementById('pdf-dl-link');
   if(dl) dl.href = urlFinal;
   var frame = document.getElementById('pdf-frame');
   if(!frame){ window.open(urlFinal,'_blank'); return; }
   frame.src = '';
-  var gdv = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(urlFinal);
+
+  // GitHub Pages: iframe direto (sem proxy — funciona perfeitamente)
+  // Outros (Cloudinary etc): Google Docs como proxy
+  var isGithub = urlFinal.indexOf('github.io') >= 0 || urlFinal.indexOf('raw.githubusercontent') >= 0;
+  var gdv = isGithub ? urlFinal : 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(urlFinal);
   frame.onload = function(){};
   frame.onerror = function(){
     document.getElementById('pdf-info') && (document.getElementById('pdf-info').textContent = '');
