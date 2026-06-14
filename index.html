@@ -492,8 +492,28 @@ canvas.pdf-pg{box-shadow:0 2px 8px rgba(0,0,0,.3);border-radius:2px;max-width:10
       </div>
       <div id="dlist-cursos"></div>
       <!-- Admin: clique 3x no cadeado para acessar -->
-      <div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid var(--brd)">
-        <span id="bib-lock" onclick="bibLockClick()" style="cursor:pointer;font-size:20px;color:var(--tx2);user-select:none;padding:8px" title="Acesso restrito">🔒</span>
+      <!-- Admin bar: mostra ferramentas quando logado, só cadeado quando não -->
+      <div id="bib-admin-bar" style="margin-top:32px;padding-top:16px;border-top:1px solid var(--brd)">
+        <!-- Estado: não logado — só cadeado -->
+        <div id="bib-bar-lock" style="text-align:center">
+          <span id="bib-lock" onclick="bibLockClick()" style="cursor:pointer;font-size:20px;color:var(--tx2);user-select:none;padding:8px" title="Acesso admin">🔒</span>
+        </div>
+        <!-- Estado: logado — painel admin visível -->
+        <div id="bib-bar-admin" style="display:none">
+          <p style="font-size:11px;color:var(--tx2);margin:0 0 10px;text-align:center">🔓 Modo Admin ativo</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <button onclick="abrirModalAdm()" style="background:linear-gradient(135deg,#1b5e20,#4CAF50);color:#fff;border:none;padding:10px 8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">
+              ➕ Adicionar PDF
+            </button>
+            <button onclick="exportarDocsBar()" style="background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;border:none;padding:10px 8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">
+              ⬇️ Exportar lista
+            </button>
+          </div>
+          <div id="bib-export-msg" style="font-size:11px;color:var(--tx2);text-align:center;min-height:14px"></div>
+          <div style="text-align:center;margin-top:8px">
+            <button onclick="sairAdmin()" style="background:none;border:none;color:var(--tx2);font-size:11px;cursor:pointer;text-decoration:underline">Sair do modo admin</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2117,6 +2137,44 @@ function admRegistrar(){
 }
 
 
+// ===== BARRA ADMIN BIBLIOTECA =====
+function atualizarBarraAdmin(){
+  var isAdmin = document.body.classList.contains('is-admin');
+  var barLock = document.getElementById('bib-bar-lock');
+  var barAdmin = document.getElementById('bib-bar-admin');
+  if(barLock) barLock.style.display = isAdmin ? 'none' : 'block';
+  if(barAdmin) barAdmin.style.display = isAdmin ? 'block' : 'none';
+}
+
+function exportarDocsBar(){
+  var msg = document.getElementById('bib-export-msg');
+  if(!_docs || _docs.length === 0){
+    if(msg){ msg.style.color='#f44336'; msg.textContent='⚠️ Nenhum documento registrado ainda.'; }
+    return;
+  }
+  var json = JSON.stringify(_docs, null, 2);
+  var blob = new Blob([json], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'docs.json'; a.click();
+  URL.revokeObjectURL(url);
+  if(msg){
+    msg.style.color='#4CAF50';
+    msg.innerHTML = '✅ Baixado! Sube no GitHub (raiz do repositório).<br>'+
+      '<span style="color:var(--tx2);font-size:10px">'+
+      'Após commit, todos os dispositivos verão os PDFs em ~1 min.</span>';
+  }
+}
+
+function sairAdmin(){
+  document.body.classList.remove('is-admin');
+  var lk = document.getElementById('bib-lock');
+  if(lk){ lk.textContent='🔒'; }
+  atualizarBarraAdmin();
+  renderCursos();
+}
+
+
 function renderFavs(){
   var g=document.getElementById('fav-list');
   if(!favs.length){g.innerHTML='<div class="empty">Nenhum favorito ainda.</div>';return;}
@@ -2291,8 +2349,10 @@ function navPrev(){
 
 function navLib(){
   navTo('s-biblioteca','nav-lib','Biblioteca');
-  // Timeout garante que a seção já está visível antes de renderizar
-  setTimeout(function(){ renderCursos(); }, 50);
+  setTimeout(function(){
+    atualizarBarraAdmin();
+    renderCursos();
+  }, 50);
 }
 
 function voltarModelos(){
@@ -2554,11 +2614,9 @@ window.abrirAdmin = async function(){
     document.body.classList.add('is-admin');
     var lk=document.getElementById('bib-lock');
     if(lk){lk.textContent='🔓';lk.title='Admin ativo';}
-    // Timeout garante que is-admin já está no body antes de renderizar
     setTimeout(function(){
+      atualizarBarraAdmin();
       renderCursos();
-      var modal = document.getElementById('modal-adm');
-      if(modal) modal.style.display = 'flex';
     }, 100);
   } else {
     // Falha
