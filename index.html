@@ -284,6 +284,7 @@ input{color:var(--tx)}
 .sis-btn span{font-size:11px;font-weight:600;display:block;color:var(--tx)}
 
 /* === BIBLIOTECA CATEGORIAS === */
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04);box-shadow:0 0 0 4px rgba(33,150,243,.3)}}
 .bib-tab{background:var(--bg2);border:1px solid var(--brd);color:var(--tx2);padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:.2s}
 .bib-tab.on{background:var(--prim);color:#fff;border-color:var(--prim)}
 .bib-tab:hover:not(.on){border-color:var(--prim);color:var(--prim)}
@@ -2092,10 +2093,19 @@ function admRegistrar(){
     localStorage.setItem('oi_extras', JSON.stringify(extras));
   }
 
-  // Feedback
+  // Feedback com lembrete de exportar
   msg.style.color = '#4CAF50';
   msg.innerHTML = '✅ <strong>'+nome.trim()+'</strong> registrado!<br>'+
-    '<small style="color:var(--tx2)">Lembre de subir o arquivo em <strong>pdfs/'+arquivo.trim()+'</strong> no GitHub.</small>';
+    '<small style="color:#ff9800">⚠️ Para aparecer no celular: exporte o docs.json abaixo e suba no GitHub.</small><br>'+
+    '<small style="color:var(--tx2)">Arquivo: <strong>pdfs/'+arquivo.trim()+'</strong></small>';
+
+  // Destacar botão de exportar
+  var btnExp = document.querySelector('[onclick="exportarDocs()"]');
+  if(btnExp){
+    btnExp.style.animation = 'pulse 1s ease 3';
+    btnExp.textContent = '⬇️ EXPORTAR docs.json agora!';
+    setTimeout(function(){ btnExp.textContent = '⬇️ Exportar docs.json'; btnExp.style.animation=''; }, 4000);
+  }
 
   // Limpar campos
   if(document.getElementById('adm-nome')) document.getElementById('adm-nome').value='';
@@ -2417,7 +2427,13 @@ function exportarDocs(){
   URL.revokeObjectURL(url);
   var st = document.getElementById('export-status');
   st.style.color = '#4CAF50';
-  st.textContent = '✅ Baixado! Coloque o docs.json no repositório GitHub junto com o index.html';
+  st.innerHTML =
+    '✅ <strong>docs.json baixado!</strong><br>'+
+    '<span style="color:var(--tx2);font-size:10px;line-height:1.6">'+
+    '1. Vai em github.com/pesadomnt-droid/oficina-inteligente<br>'+
+    '2. Clica no <strong>docs.json</strong> existente → ✏️ editar → sobe o novo<br>'+
+    '3. Commit → pronto, celular verá em ~1 min'+
+    '</span>';
 }
 
 // Abre modal admin (helper sem aspas problemáticas)
