@@ -37,5 +37,18 @@
     "paginas": "",
     "tem_texto": false,
     "fonte": "github"
+  },
+  {
+    "id": "1781444720007",
+    "nome": "Unidade dosadora",
+    "viatura_id": "geral",
+    "cat": "curso",
+    "nivel": "mecanica-basica",
+    "palavras_chave": "",
+    "arquivo_url": "https://pesadomnt-droid.github.io/oficina-inteligente/pdfs/Unidade dosadora.pdf",
+    "tamanho": "",
+    "paginas": "",
+    "tem_texto": false,
+    "fonte": "github"
   }
 ]
