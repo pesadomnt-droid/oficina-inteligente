@@ -1,26 +1,15 @@
 [
   {
-    "id": "1781178135569",
-    "nome": "Unidade dosadora",
-    "viatura_id": "geral",
-    "cat": "curso",
-    "nivel": "mecanica-basica",
-    "palavras_chave": "",
-    "arquivo_url": "https://res.cloudinary.com/dc8cxw8bs/image/upload/v1781178133/acryeflc9vmck4wadnwc.pdf",
-    "tamanho": "1.0MB",
-    "paginas": 5,
-    "tem_texto": true
-  },
-  {
-    "id": "1781357972442",
-    "nome": "Elétricidade conceitos básicos-1",
+    "id": "1781437688876",
+    "nome": "Elétricidade",
     "viatura_id": "geral",
     "cat": "curso",
     "nivel": "eletrica-basica",
     "palavras_chave": "",
-    "arquivo_url": "https://res.cloudinary.com/dc8cxw8bs/image/upload/v1781357971/jartwgper8dcvmiwkdyw.pdf",
-    "tamanho": "1.5MB",
-    "paginas": 48,
-    "tem_texto": true
+    "arquivo_url": "https://pesadomnt-droid.github.io/oficina-inteligente/pdfs/Elétricidade conceitos básicos-1.pdf",
+    "tamanho": "",
+    "paginas": "",
+    "tem_texto": false,
+    "fonte": "github"
   }
 ]
